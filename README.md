@@ -17,7 +17,7 @@ Built for **real-time performance and rapid development using Node.js**.
 | **Frontend** | React + TypeScript + TailwindCSS       |
 | **Charts**   | Lightweight Charts / Recharts          |
 | **Build**    | npm + Vite                             |
-| **Deploy**   | Docker + Render / Fly.io               |
+| **Deploy**   | Docker (local) + Render / Fly.io (future) |
 
 ---
 
@@ -171,16 +171,27 @@ docker-compose up --build
 
 ---
 
-## 📊 Current Status 🚧/ ✅
+## 📊 Current Status 🚧 / ✅
 
-* 🚧 Backend: HTTP API scaffold
-* 🚧 Backend: WebSocket server
-* 🚧 Trade engine (in progress)
-* 🚧 Market data integration
-* 🚧 Portfolio system
-* 🚧 Frontend integration
+**Roadmap Coverage:** Phases 0-7 (Backend → Frontend Scaffold → First Prototype)
 
-See `docs/roadmap.md` for milestones.
+* 🚧 Phase 0: Project initialization & dependencies
+* 🚧 Phase 1: Core backend (Fastify + config)
+* 🚧 Phase 2: WebSocket server integration
+* 🚧 Phase 3: Docker setup (PostgreSQL + Redis)
+* 🚧 Phase 4: Trade engine (in-memory logic)
+* 🚧 Phase 5: Market data integration
+* 🚧 Phase 6: First working prototype (end-to-end)
+* 🚧 Phase 7: Frontend setup (React + WebSocket hooks)
+
+See `docs/roadmap.md` for detailed implementation steps.
+
+**Not Yet Implemented:**
+* Authentication & user accounts
+* Persistent trade history
+* Real order matching engine
+* Live market data API integration
+* Advanced charting & analytics
 
 ---
 
