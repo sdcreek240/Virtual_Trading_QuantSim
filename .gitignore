@@ -1,0 +1,217 @@
+# ============================================
+# QuantSim - Virtual Trading Platform
+# Comprehensive .gitignore for Node.js + React + Docker
+# ============================================
+
+# ----------------------------
+# Dependencies
+# ----------------------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# ----------------------------
+# Build outputs
+# ----------------------------
+dist/
+build/
+*.tsbuildinfo
+.frontend/dist/
+frontend/dist/
+frontend/build/
+
+# ----------------------------
+# Environment & Configuration
+# ----------------------------
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+*.env
+!.env.example
+
+# ----------------------------
+# IDE / Editor files
+# ----------------------------
+# VSCode
+.vscode/
+*.code-workspace
+.history/
+
+# IntelliJ / WebStorm / PhpStorm
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+.~*
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# ----------------------------
+# OS generated files
+# ----------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ----------------------------
+# Logs
+# ----------------------------
+logs/
+*.log
+log/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# ----------------------------
+# Testing / Coverage
+# ----------------------------
+coverage/
+.nyc_output/
+*.lcov
+jest-coverage/
+test-results/
+playwright-report/
+.vitest/
+
+# ----------------------------
+# Docker
+# ----------------------------
+docker/data/
+docker/postgres-data/
+docker/redis-data/
+*.pid
+docker-compose.override.yml
+
+# ----------------------------
+# Database
+# ----------------------------
+*.sqlite
+*.sqlite3
+*.db
+*.dbschema
+postgres-data/
+redis-data/
+
+# ----------------------------
+# Temporary files
+# ----------------------------
+tmp/
+temp/
+*.tmp
+*.temp
+.cache/
+.parcel-cache/
+.next/
+.nuxt/
+.swc/
+
+# ----------------------------
+# TypeScript
+# ----------------------------
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# ----------------------------
+# Backend specific (Node.js)
+# ----------------------------
+backend/dist/
+backend/node_modules/
+backend/.env
+backend/.env.*
+!backend/.env.example
+
+# ----------------------------
+# Frontend specific (React + Vite)
+# ----------------------------
+frontend/dist/
+frontend/node_modules/
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+frontend/.vite/
+
+# ----------------------------
+# Secrets & Keys
+# ----------------------------
+*.pem
+*.key
+*.crt
+*.p12
+.secrets/
+secrets/
+*.secret
+keys/
+*.p8
+
+# ----------------------------
+# Miscellaneous
+# ----------------------------
+*.bak
+*.swp
+*.swo
+*~
+.DS_Store
+.cache/
+.vercel/
+.netlify/
+.terraform/
+*.heapsnapshot
+*.heapsnapshot.*
+profile-*.json
+
+# ----------------------------
+# Project specific
+# ----------------------------
+# API response caches
+.cache-api/
+
+# Redis dump
+dump.rdb
+
+# PostgreSQL dumps
+*.dump
+*.sql.backup
+
+# User uploaded data (if any)
+uploads/
+temp-uploads/
+
+# Script outputs
+scripts/output/
+*.generated.ts
+*.generated.js
+
+# ----------------------------
+# Keep example files
+# ----------------------------
+!.env.example
+!.gitkeep

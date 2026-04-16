@@ -1,37 +1,16 @@
 # QuantSim Roadmap
 
-> Step-by-step plan to go from zero → working prototype (focus: backend, Docker, config)
-
-This is not theory. Follow this in order and don’t skip steps.
-
----
-
 # 🚧 Phase 0 — Project Initialization
 
 ## 0.1 Create Project Structure
 
-```bash
-mkdir Virtual_Trading_QuantSim
-cd Virtual_Trading_QuantSim
-
-mkdir backend frontend database docker docs scripts
-```
+![VSCode screenshot of initial project structure](image/roadmap/image.png)
 
 ---
 
 ## 0.2 Initialize Backend (Node.js + TypeScript)
 
-```bash
-cd backend
-npm init -y
-```
-
-Install core dependencies:
-
-```bash
-npm install fastify ws ioredis pg dotenv
-npm install -D typescript ts-node-dev @types/node
-```
+![VSCode screenshot of backend initialisation](image/roadmap/initBackend.png)
 
 ---
 
@@ -40,9 +19,7 @@ npm install -D typescript ts-node-dev @types/node
 ```bash
 npx tsc --init
 ```
-
-Modify `tsconfig.json`:
-
+#### tsconfig.json:
 ```json
 {
   "compilerOptions": {
@@ -60,24 +37,20 @@ Modify `tsconfig.json`:
 
 ## 0.4 Setup Scripts (`package.json`)
 
-Replace scripts:
-
 ```json
 "scripts": {
   "dev": "ts-node-dev --respawn src/server.ts",
   "build": "tsc",
-  "start": "node dist/server.js"
-}
+  "start": "node dist/server.js",
+  "test": "echo \"Error: no test specified\" && exit 1"
+},
 ```
 
 ---
 
 ## 0.5 Create Base Backend Structure
 
-```bash
-mkdir -p src/{routes,websocket,trading,portfolio,market,services,config}
-touch src/server.ts
-```
+![VSCode screenshot of backend base setup structure](image/roadmap/BaseBackendSetup.png)
 
 ---
 
