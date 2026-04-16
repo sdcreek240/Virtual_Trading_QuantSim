@@ -4,20 +4,46 @@
 
 QuantSim is a browser-based sandbox trading environment that streams live market data to users. Practice investment strategies risk-free with virtual currency, real-time charts, and instant trade execution.
 
-Built from the ground up for performance using **C++ on the backend**.
+Built for **real-time performance and rapid development using Node.js**.
 
 ---
 
 ## 🚀 Tech Stack
 
-| Layer        | Technology                                   |
-| ------------ | -------------------------------------------- |
-| **Backend**  | Modern C++ (C++20) + Drogon (HTTP/WebSocket) |
-| **Database** | PostgreSQL + Redis (caching)                 |
-| **Frontend** | React + TypeScript + TailwindCSS             |
-| **Charts**   | Lightweight Charts / Recharts                |
-| **Build**    | CMake + Conan                                |
-| **Deploy**   | Docker + Render / Fly.io                     |
+| Layer        | Technology                             |
+| ------------ | -------------------------------------- |
+| **Backend**  | Node.js (Fastify) + WebSockets (`ws`)  |
+| **Database** | PostgreSQL + Redis (caching & pub/sub) |
+| **Frontend** | React + TypeScript + TailwindCSS       |
+| **Charts**   | Lightweight Charts / Recharts          |
+| **Build**    | npm + Vite                             |
+| **Deploy**   | Docker + Render / Fly.io               |
+
+---
+
+## 🧠 Architecture Overview
+
+```text
+Client (React)
+   │
+   ├── REST API (HTTP)
+   │       ↓
+   │   Node.js Backend (Fastify)
+   │       ├── Trade Engine (in-memory logic)
+   │       ├── Portfolio Service
+   │       ├── Market Data Service
+   │       └── Auth (future)
+   │
+   ├── WebSocket Connection
+   │       ↓
+   │   Real-time Price + Order Updates
+   │
+   ├── PostgreSQL (persistent data)
+   │
+   └── Redis
+           ├── Cache (prices, sessions)
+           └── Pub/Sub (real-time updates)
+```
 
 ---
 
@@ -27,15 +53,16 @@ Built from the ground up for performance using **C++ on the backend**.
 Virtual_Trading_QuantSim/
 ├── backend/
 │   ├── src/
-│   │   ├── api/          # REST endpoints (trades, portfolio)
-│   │   ├── websocket/    # Real-time price streams
-│   │   ├── trading/      # Order execution & matching
-│   │   ├── portfolio/    # User holdings & P&L
-│   │   ├── data/         # API fetching & caching
-│   │   └── main.cpp      # Entry point
-│   ├── include/          # Headers
-│   ├── tests/            # Unit tests (Catch2)
-│   └── CMakeLists.txt
+│   │   ├── routes/        # REST endpoints
+│   │   ├── websocket/     # WebSocket handlers
+│   │   ├── trading/       # Order execution logic
+│   │   ├── portfolio/     # Holdings & P&L
+│   │   ├── market/        # Market data ingestion
+│   │   ├── services/      # Shared services
+│   │   └── server.ts      # Entry point
+│   ├── tests/
+│   ├── package.json
+│   └── tsconfig.json
 │
 ├── frontend/
 │   ├── src/
@@ -44,9 +71,9 @@ Virtual_Trading_QuantSim/
 │   │   │   ├── TradeForm.tsx
 │   │   │   ├── Portfolio.tsx
 │   │   │   └── OrderBook.tsx
-│   │   ├── pages/        # Dashboard, Login
-│   │   ├── hooks/        # WebSocket, API calls
-│   │   ├── store/        # State management
+│   │   ├── pages/
+│   │   ├── hooks/
+│   │   ├── store/
 │   │   └── App.tsx
 │   ├── package.json
 │   └── tailwind.config.js
@@ -70,46 +97,32 @@ Virtual_Trading_QuantSim/
 
 ## 🌿 Branching Strategy (Solo Developer)
 
-Tailored for solo development
-
 ```text
 main ─────────────────────────────────────────►
 │
 ├── feature/feature-name ───────────────┐
 ├── fix/bug-description ────────────────┤
-└── experimental/idea (optional) ───────┘
+└── experimental/idea ───────┘
 ```
 
 ### Rules
 
-| Branch           | Purpose                         |
-| ---------------- | ------------------------------- |
-| `main`           | Always stable and deployable    |
-| `feature/*`      | New functionality               |
-| `fix/*`          | Bug fixes                       |
-| `experimental/*` | Risky ideas (delete if useless) |
+| Branch           | Purpose           |
+| ---------------- | ----------------- |
+| `main`           | Always deployable |
+| `feature/*`      | New features      |
+| `fix/*`          | Bug fixes         |
+| `experimental/*` | Risky ideas       |
 
-### Workflow
+---
 
-```bash
-# Start a feature
-git checkout main
-git pull
-git checkout -b feature/real-time-chart
+## ⚙️ Core Features
 
-# Work...
-
-# Merge
-git checkout main
-git merge --squash feature/real-time-chart
-git commit -m "feat: add real-time chart component"
-git push
-
-# Cleanup
-git branch -d feature/real-time-chart
-```
-
-No `develop`, no `release`, no `hotfix`.
+* Real-time price streaming (WebSockets)
+* Instant trade execution (in-memory engine)
+* Portfolio tracking (P&L, positions)
+* Order book simulation
+* Market data ingestion (API-based)
 
 ---
 
@@ -117,12 +130,10 @@ No `develop`, no `release`, no `hotfix`.
 
 ### Prerequisites
 
-* C++20 compiler (GCC 11+, Clang 14+, or MSVC 2022)
-* CMake 3.20+
-* Conan 2.0+
 * Node.js 18+
-* PostgreSQL 14+ (or Docker)
-* Redis (optional)
+* PostgreSQL 14+
+* Redis (optional but recommended)
+* Docker (optional)
 
 ---
 
@@ -130,15 +141,13 @@ No `develop`, no `release`, no `hotfix`.
 
 ```bash
 # Clone repo
-git clone https://github.com/sdcreek240/Virtual_Trading_QuantSim.git
+git clone https://github.com/yourusername/Virtual_Trading_QuantSim.git
 cd Virtual_Trading_QuantSim
 
 # Backend
 cd backend
-conan install . --build=missing
-cmake --preset default
-cmake --build build
-./build/quantsim_backend
+npm install
+npm run dev
 
 # Frontend (new terminal)
 cd ../frontend
@@ -162,19 +171,26 @@ docker-compose up --build
 
 ---
 
-## 📊 Current Status - 🚧/✅
+## 📊 Current Status 🚧/ ✅
 
-* 🚧 Backend: HTTP server
-* 🚧 Backend: WebSocket price streaming
-* 🚧 Backend: Trade execution engine
-* 🚧 Database: User & portfolio schema
-* 🚧 API Integration: Market data fetcher
-* 🚧 Frontend: Chart component
-* 🚧 Frontend: Trade form
-* 🚧 Frontend: Portfolio view
-* 🚧 Deployment: Pending / In progress
+* 🚧 Backend: HTTP API scaffold
+* 🚧 Backend: WebSocket server
+* 🚧 Trade engine (in progress)
+* 🚧 Market data integration
+* 🚧 Portfolio system
+* 🚧 Frontend integration
 
-See `docs/roadmap.md` for full milestones.
+See `docs/roadmap.md` for milestones.
+
+---
+
+## 🧠 Future Scaling Plan
+
+When performance becomes a bottleneck:
+
+* Move trade execution engine → **C++ microservice**
+* Keep Node.js → API gateway
+* Use Redis → event streaming layer
 
 ---
 
@@ -187,4 +203,4 @@ MIT — free to use, modify, and distribute.
 ## 👤 Author
 
 **Aidan Dawson**
-Solo developer — architect, backend engineer, and builder
+Solo developer - architect, backend engineer, and builder
