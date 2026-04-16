@@ -59,33 +59,7 @@ npx tsc --init
 ## 1.1 Basic Fastify Server
 
 `src/server.ts`
-
-```ts
-import Fastify from "fastify";
-
-const app = Fastify();
-
-app.get("/health", async () => {
-  return { status: "ok" };
-});
-
-const start = async () => {
-  try {
-    await app.listen({ port: 3000, host: "0.0.0.0" });
-    console.log("Server running on port 3000");
-  } catch (err) {
-    process.exit(1);
-  }
-};
-
-start();
-```
-
-Test:
-
-```bash
-npm run dev
-```
+![VSCode screenshot of backend initialisation](image/roadmap/server1.png)
 
 ---
 
