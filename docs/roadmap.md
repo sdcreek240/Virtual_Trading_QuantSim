@@ -65,22 +65,7 @@ npx tsc --init
 
 ## 1.2 Environment Configuration
 
-Install dotenv (already done)
-
-Create `.env`:
-
-```env
-PORT=3000
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=postgres
-DB_NAME=quantsim
-REDIS_HOST=localhost
-REDIS_PORT=6379
-```
-
-Create `src/config/env.ts`:
+ `src/config/env.ts`:
 
 ```ts
 import dotenv from "dotenv";
@@ -114,8 +99,6 @@ export const db = new Pool({
   database: ENV.DB_NAME,
 });
 ```
-
-Test it with a simple query.
 
 ---
 
