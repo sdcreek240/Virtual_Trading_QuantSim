@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,52 +6,93 @@ datasource db {
   provider = "postgresql"
 }
 
+//ENUMS
+enum AssetType {
+  STOCK
+  CRYPTO
+  ETF
+}
+
+enum TradeSide {
+  BUY
+  SELL
+}
+
+enum TradeStatus {
+  PENDING
+  EXECUTED
+  CANCELLED
+}
+//END_ENUMS
+
+//MODELS:
+
 // User accounts
 model User {
-  id         String    @id @default(cuid())
-  email      String    @unique
-  username   String    @unique
+  id           String   @id @default(cuid())
+  email        String   @unique
+  username     String   @unique
   passwordHash String
-  balance    Float     @default(100000.00)  // Virtual currency
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  balance      Float    @default(100000.00) // Virtual cash balance
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   portfolios Portfolio[]
   trades     Trade[]
 }
 
-// What stocks user currently holds
+// Tradeable assets registry — used for seeding and validation
+model Asset {
+  id       String    @id @default(cuid())
+  symbol   String    @unique // e.g. "AAPL", "BTC-USD"
+  name     String            // e.g. "Apple Inc.", "Bitcoin"
+  type     AssetType
+  exchange String?           // e.g. "NASDAQ", "NYSE", null for crypto
+
+  marketData MarketData?
+}
+
+// What a user currently holds
 model Portfolio {
-  id         String   @id @default(cuid())
-  userId     String
-  user       User     @relation(fields: [userId], references: [id])
-  symbol     String   // e.g., "AAPL", "BTC-USD"
-  quantity   Int      @default(0)
-  avgPrice   Float    // Average purchase price
+  id       String @id @default(cuid())
+  userId   String
+  symbol   String
+  quantity Float  @default(0)  // Float to support fractional crypto
+  avgPrice Float               // Average purchase price (cost basis)
 
-  @@unique([userId, symbol])  // One row per user per stock
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, symbol]) // One row per user per asset
 }
 
-// Historical record of every trade
+// Immutable record of every executed trade
 model Trade {
-  id        String   @id @default(cuid())
+  id        String      @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
   symbol    String
-  side      String   // "BUY" or "SELL"
-  quantity  Int
-  price     Float    // Price at execution
-  total     Float    // quantity * price
-  createdAt DateTime @default(now())
+  side      TradeSide
+  quantity  Float                        // Float for fractional shares/crypto
+  price     Float                        // Execution price
+  total     Float                        // quantity * price (denormalised for speed)
+  status    TradeStatus @default(EXECUTED)
+  createdAt DateTime    @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([symbol])
 }
 
-// Market data cache (---reduce API calls)
+// Latest market snapshot — one row per symbol, updated by the market service
 model MarketData {
-  id        String   @id @default(cuid())
-  symbol    String
-  price     Float
-  volume    Int?
-  high24h   Float?
-  low24h    Float?
-  updatedAt DateTime @default(now())
+  id            String   @id @default(cuid())
+  symbol        String   @unique
+  price         Float
+  volume        Float?
+  high24h       Float?
+  low24h        Float?
+  changePercent Float?   // % change vs previous close — useful for dashboard movers
+  updatedAt     DateTime @updatedAt
+
+  asset Asset? @relation(fields: [symbol], references: [symbol])
 }
