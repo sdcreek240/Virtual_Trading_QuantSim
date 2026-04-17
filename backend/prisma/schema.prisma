@@ -1,0 +1,58 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// User accounts
+model User {
+  id         String    @id @default(cuid())
+  email      String    @unique
+  username   String    @unique
+  passwordHash String
+  balance    Float     @default(100000.00)  // Virtual currency
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  portfolios Portfolio[]
+  trades     Trade[]
+}
+
+// What stocks user currently holds
+model Portfolio {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  symbol     String   // e.g., "AAPL", "BTC-USD"
+  quantity   Int      @default(0)
+  avgPrice   Float    // Average purchase price
+
+  @@unique([userId, symbol])  // One row per user per stock
+}
+
+// Historical record of every trade
+model Trade {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  symbol    String
+  side      String   // "BUY" or "SELL"
+  quantity  Int
+  price     Float    // Price at execution
+  total     Float    // quantity * price
+  createdAt DateTime @default(now())
+}
+
+// Market data cache (---reduce API calls)
+model MarketData {
+  id        String   @id @default(cuid())
+  symbol    String
+  price     Float
+  volume    Int?
+  high24h   Float?
+  low24h    Float?
+  updatedAt DateTime @default(now())
+}
