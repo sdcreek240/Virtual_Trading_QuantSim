@@ -5,8 +5,22 @@ WORKDIR /app
 COPY backend/package*.json ./
 RUN npm install
 
+# Copy prisma files first for generate
+COPY backend/prisma ./prisma/
+COPY backend/prisma.config.ts ./
+
+# Generate Prisma client
+RUN npx prisma generate
+
 COPY backend .
 
+# Build TypeScript
 RUN npm run build
 
+EXPOSE 3000
+
+# Run migrations then start server
+CMD sh -c "npx prisma migrate deploy && node dist/src/server.js"
+
 CMD ["node", "dist/server.js"]
+
