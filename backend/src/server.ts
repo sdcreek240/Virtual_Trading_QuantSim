@@ -8,6 +8,16 @@ import { authRoutes } from "./routes/auth";
 
 const app = Fastify({ logger: false });
 
+// Auth middleware as a simple function (not decorated)
+async function authenticate(request: FastifyRequest, reply: FastifyReply) {
+  try {
+    await request.jwtVerify();
+  } catch (err) {
+    reply.status(401).send({ error: "Unauthorized" });
+    throw err;
+  }
+}
+
 type DbInfoResult = {
   database_name: string;
   user: string;
@@ -52,7 +62,6 @@ app.get("/health", async () => {
 });
 
 app.get("/favicon.ico", async (req, reply) => reply.status(204).send());
-
 app.get("/", async () => ({ message: "QuantSim Trading API is running" }));
 
 // Register JWT plugin
@@ -63,15 +72,6 @@ app.register(fastifyJwt, {
 
 // Register auth routes
 app.register(authRoutes);
-
-// Auth middleware
-app.decorate("authenticate", async (request: FastifyRequest, reply: FastifyReply) => {
-  try {
-    await request.jwtVerify();
-  } catch (err) {
-    reply.status(401).send({ error: "Unauthorized" });
-  }
-});
 
 const start = async () => {
   try {

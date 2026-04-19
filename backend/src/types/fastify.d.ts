@@ -10,8 +10,4 @@ declare module "fastify" {
       exp?: number;
     };
   }
-
-  interface FastifyInstance {
-    jwt: JWT;
-  }
 }
