@@ -7,6 +7,10 @@ services:
       - "3000:3000"
     env_file:
       - ../backend/.env
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/quantsim?schema=public
+      - DB_HOST=db
+      - REDIS_HOST=redis
     depends_on:
       - db
       - redis

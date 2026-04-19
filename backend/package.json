@@ -15,8 +15,8 @@
     "db:deploy": "prisma migrate deploy",
     "db:seed": "npx tsx prisma/seed.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "docker:up": "docker-compose -f ../docker/docker-compose.yml up -d",
-    "docker:down": "docker-compose -f ../docker/docker-compose.yml down",
+    "docker:up": "docker-compose -f ../docker/docker-compose.yml down -v && docker-compose -f ../docker/docker-compose.yml up -d --build && echo 'Waiting for database...' && sleep 5 && npm run db:push && npm run db:seed",
+    "docker:down": "docker-compose -f ../docker/docker-compose.yml down -v",
     "docker:restart": "docker-compose -f ../docker/docker-compose.yml restart",
     "docker:logs": "docker-compose -f ../docker/docker-compose.yml logs -f",
     "docker:ps": "docker-compose -f ../docker/docker-compose.yml ps",
@@ -41,9 +41,10 @@
     "@types/ws": "^8.18.1",
     "prisma": "^7.7.0",
     "ts-node-dev": "^2.0.0",
+    "tsx": "^4.21.0",
     "typescript": "^6.0.2"
   },
   "prisma": {
-    "seed": "ts-node prisma/seed.ts"
+    "seed": "npx tsx prisma/seed.ts"
   }
 }

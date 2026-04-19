@@ -2,12 +2,9 @@ import "dotenv/config";
 
 import Fastify from "fastify";
 import { initWebSocket } from "./websocket/server";
-import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "./lib/prisma";
 
-const connectionString = process.env.DATABASE_URL!;
-const adapter = new PrismaPg({ connectionString });
-const prisma = new PrismaClient({ adapter });
+import { usersRoutes } from "./routes/users";
 
 const app = Fastify({
 //   logger: true  // Enable built-in logging
@@ -19,6 +16,8 @@ type DbInfoResult = {
   server_address: string | null;
   server_port: number | null;
 };
+
+app.register(usersRoutes);
 
 app.get("/health", async () => {
   const startTime = Date.now();
