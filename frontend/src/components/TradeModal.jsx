@@ -5,7 +5,7 @@ function TradeModal({ open, onClose, stock }) {
   const [amount, setAmount] = useState("");
   const { buyStock, sellStock } = usePortfolio();
 
-  if (!open) return null;
+  if (!open || !stock) return null;
 
   function handleBuy() {
     buyStock(stock, amount);

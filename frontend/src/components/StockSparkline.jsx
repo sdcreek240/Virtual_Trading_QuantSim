@@ -14,7 +14,7 @@ function StockSparkline({ data, isPositive }) {
             type="monotone"
             dataKey="value"
             stroke={isPositive ? "#22d3ee" : "#ec4899"}
-            strokeWidth={2}
+            strokeWidth={2.5}
             dot={false}
           />
         </LineChart>

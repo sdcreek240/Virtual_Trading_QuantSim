@@ -1,13 +1,61 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* =========================
+   GLOBAL FINTECH BACKGROUND
+========================= */
+
 body {
-  background: radial-gradient(circle at top, #1a0033, #05010a);
+  background:
+    radial-gradient(circle at top, rgba(99,102,241,0.18), transparent 50%),
+    radial-gradient(circle at bottom, rgba(34,211,238,0.12), transparent 60%),
+    #0b0f1a;
+
   color: white;
-  font-family: system-ui, sans-serif;
+  font-family: ui-sans-serif, system-ui;
 }
 
+/* smoother rendering */
 * {
-  transition: all 0.2s ease-in-out;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* =========================
+   FINTECH CARD ANIMATIONS
+========================= */
+
+@keyframes pulseGreen {
+  0% { box-shadow: 0 0 0 rgba(34,211,238,0); }
+  50% { box-shadow: 0 0 25px rgba(34,211,238,0.25); }
+  100% { box-shadow: 0 0 0 rgba(34,211,238,0); }
+}
+
+@keyframes pulseRed {
+  0% { box-shadow: 0 0 0 rgba(236,72,153,0); }
+  50% { box-shadow: 0 0 25px rgba(236,72,153,0.2); }
+  100% { box-shadow: 0 0 0 rgba(236,72,153,0); }
+}
+
+.animate-pulse-green {
+  animation: pulseGreen 2.5s infinite;
+}
+
+.animate-pulse-red {
+  animation: pulseRed 2.5s infinite;
+}
+
+/* =========================
+   OPTIONAL SMOOTH FADE IN
+========================= */
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out;
 }

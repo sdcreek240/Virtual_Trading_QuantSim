@@ -19,30 +19,40 @@ function StockPage() {
   return (
     <div className="p-6 space-y-6">
 
-      {/* HEADER */}
+      {/* HERO CARD */}
       <div className="
+        relative overflow-hidden
+        p-6 rounded-2xl
+
         bg-white/5 backdrop-blur-md
         border border-white/10
-        p-6 rounded-2xl
-        shadow-[0_0_40px_rgba(99,102,241,0.12)]
+
+        shadow-[0_0_50px_rgba(99,102,241,0.15)]
       ">
+
+        <div className="
+          absolute -top-20 -right-20 w-64 h-64
+          bg-cyan-500/20 blur-3xl rounded-full
+        " />
 
         <h1 className="text-3xl font-bold">
           {stock.name} ({stock.symbol})
         </h1>
 
         <p className="text-gray-400 mt-2">
-          Live market simulation view
+          Live simulated trading feed
         </p>
 
-        <div className="mt-6 flex items-end justify-between">
+        <div className="mt-6 flex justify-between items-end">
 
           <div>
-            <p className="text-4xl font-bold">
+            <p className="text-4xl font-bold tabular-nums">
               ${stock.price}
             </p>
 
-            <p className={isPositive ? "text-cyan-400" : "text-pink-500"}>
+            <p className={`mt-1 font-semibold ${
+              isPositive ? "text-cyan-400" : "text-pink-500"
+            }`}>
               {isPositive ? "+" : ""}{stock.change}%
             </p>
           </div>
@@ -59,8 +69,10 @@ function StockPage() {
           className="
             mt-6 px-6 py-2 rounded-lg font-semibold
 
-            bg-gradient-to-r from-cyan-500 to-blue-500
+            bg-gradient-to-r from-cyan-500 to-indigo-500
             hover:scale-105 transition-all
+
+            shadow-[0_0_25px_rgba(34,211,238,0.25)]
           "
         >
           Trade
@@ -70,16 +82,17 @@ function StockPage() {
 
       {/* CHART AREA */}
       <div className="
+        h-72 rounded-2xl
         bg-white/5 backdrop-blur-md
         border border-white/10
-        rounded-2xl h-72
+        rounded-2xl
+
         flex items-center justify-center
         text-gray-400
       ">
-        📈 Full Chart Coming Soon
+        📊 Advanced Chart Coming Soon
       </div>
 
-      {/* MODAL (SAFE WRAPPED) */}
       {stock && (
         <TradeModal
           open={open}

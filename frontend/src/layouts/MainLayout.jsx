@@ -3,26 +3,23 @@ import { Outlet } from "react-router-dom";
 
 function MainLayout() {
   return (
-    <div className="flex min-h-screen bg-transparent text-white">
+    <div className="min-h-screen bg-[#0b0f1a] text-white">
 
       <Sidebar />
 
-      <div className="flex-1">
+      <main
+        className="
+          pt-16 md:pt-0
+          ml-16 md:ml-16
+          md:group-hover:ml-56
 
-        {/* TOP BAR */}
-        <div className="
-          px-6 py-4 
-          border-b border-white/10
-          bg-white/5 backdrop-blur-md
-        ">
-          <h1 className="text-xl font-bold drop-shadow-[0_0_10px_rgba(99,102,241,0.4)]">
-            TiffEx Trading
-          </h1>
-        </div>
-
+          p-6
+          transition-all duration-300
+        "
+      >
         <Outlet />
+      </main>
 
-      </div>
     </div>
   );
 }

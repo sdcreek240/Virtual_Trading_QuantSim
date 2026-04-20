@@ -6,24 +6,20 @@ export function PortfolioProvider({ children }) {
   const [portfolio, setPortfolio] = useState({});
 
   function buyStock(stock, amount) {
-    setPortfolio((prev) => {
-      const existing = prev[stock.symbol] || 0;
-
-      return {
-        ...prev,
-        [stock.symbol]: existing + Number(amount),
-      };
-    });
+    setPortfolio((prev) => ({
+      ...prev,
+      [stock.symbol]: (prev[stock.symbol] || 0) + Number(amount),
+    }));
   }
 
   function sellStock(stock, amount) {
     setPortfolio((prev) => {
-      const existing = prev[stock.symbol] || 0;
-      const newValue = existing - Number(amount);
+      const current = prev[stock.symbol] || 0;
+      const updated = current - Number(amount);
 
       return {
         ...prev,
-        [stock.symbol]: newValue > 0 ? newValue : 0,
+        [stock.symbol]: updated > 0 ? updated : 0,
       };
     });
   }

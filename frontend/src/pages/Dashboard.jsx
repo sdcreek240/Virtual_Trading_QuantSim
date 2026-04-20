@@ -1,10 +1,22 @@
 import { useEffect, useState } from "react";
 import { stocks as initialStocks, simulatePrice } from "../data/stocks";
 import StockCard from "../components/StockCard";
-
+import { usePortfolio } from "../context/PortfolioContext";
+import { useAuth } from "../context/AuthContext";
 
 function Dashboard() {
   const [data, setData] = useState(initialStocks);
+
+  const { logout } = useAuth();
+
+  // SAFE: prevents crash if context breaks
+  let portfolio = {};
+  try {
+    const ctx = usePortfolio();
+    portfolio = ctx?.portfolio || {};
+  } catch (e) {
+    portfolio = {};
+  }
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -17,35 +29,63 @@ function Dashboard() {
   return (
     <div className="p-6">
 
-      <h2 className="text-3xl font-bold mb-2">
-        Market Dashboard
-      </h2>
+      {/* HEADER */}
+      <div className="flex justify-between items-center mb-6">
 
-      <p className="text-gray-400 mb-8">
-        Live simulated trading environment
-      </p>
+        <h2 className="text-3xl font-bold">
+          Market Dashboard
+        </h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <button
+          onClick={logout}
+          className="
+            text-sm text-gray-400
+            hover:text-white transition
+          "
+        >
+          Logout
+        </button>
+
+      </div>
+
+      {/* STOCK GRID */}
+      <div className="
+      grid grid-cols-1 md:grid-cols-3 gap-5
+      animate-fade-in
+      ">
         {data.map((stock) => (
           <StockCard key={stock.symbol} stock={stock} />
         ))}
       </div>
 
+      {/* PORTFOLIO PANEL */}
+      <div className="
+        mt-8 p-4 rounded-xl
+        bg-white/5 backdrop-blur-md
+        border border-white/10
+        rounded-2xl
+      ">
+
+        <h3 className="font-bold mb-2">
+          Portfolio
+        </h3>
+
+        {Object.keys(portfolio).length === 0 ? (
+          <p className="text-gray-400">
+            No holdings yet
+          </p>
+        ) : (
+          Object.entries(portfolio).map(([symbol, amount]) => (
+            <p key={symbol} className="text-gray-300">
+              {symbol}: {amount}
+            </p>
+          ))
+        )}
+
+      </div>
+
     </div>
   );
-  <div className="mt-6 bg-white/5 p-4 rounded-xl border border-white/10">
-  <h3 className="font-bold mb-2">Portfolio</h3>
-
-  {Object.keys(portfolio).length === 0 ? (
-    <p className="text-gray-400">No holdings yet</p>
-  ) : (
-    Object.entries(portfolio).map(([symbol, amount]) => (
-      <p key={symbol}>
-        {symbol}: {amount}
-      </p>
-    ))
-  )}
-</div>
 }
 
 export default Dashboard;
