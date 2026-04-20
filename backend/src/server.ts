@@ -8,6 +8,7 @@ import { authRoutes } from "./routes/auth";
 
 const app = Fastify({ logger: false });
 
+
 // Auth middleware as a simple function (not decorated)
 async function authenticate(request: FastifyRequest, reply: FastifyReply) {
   try {

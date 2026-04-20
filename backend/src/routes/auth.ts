@@ -8,8 +8,10 @@ const userController = new UserController();
 export async function authRoutes(app: FastifyInstance) {
 
     app.get("/protected", { preHandler: authenticate }, async () => {
-    return { message: "Protected data" };
+        return { message: "Protected data" };
     });
 
-    app.get("/register", userController.registerUser);
+    app.post("/register", userController.registerUser);
+
+    app.post("/login", userController.loginUser);
 }//END_usersRoutes

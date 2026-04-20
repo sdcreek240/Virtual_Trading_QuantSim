@@ -8,7 +8,7 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "db:migrate": "prisma migrate dev",
-    "db:studio": "npx prisma studio --port 51212 --browser none",
+    "db:studio": "npx prisma studio --port 5555 --browser none",
     "db:generate": "prisma generate",
     "db:reset": "prisma migrate reset",
     "db:push": "prisma db push",

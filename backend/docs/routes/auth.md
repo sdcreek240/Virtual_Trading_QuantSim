@@ -42,7 +42,8 @@ Authenticates a user and returns a token.
   "user": {
     "id": "cuid",
     "email": "user@example.com",
-    "username": "trader1"
+    "username": "trader1",
+    "lastLoginAt": "2026-04-20T17:31:28.436Z"
   },
   "token": "jwt_token_here"
 }
