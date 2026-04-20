@@ -1,34 +1,66 @@
 import { InternalEventTargetEventProperties } from "node:events";
 
-export interface userRegister {
-
+/**
+ * Data required for user registration.
+ */
+export interface UserRegister {
+    /** The user's email address. Must be unique and valid format. */
     email: string;
+    /** The user's unique username. */
     username: string;
+    /** The user's plain-text password. Will be hashed before storage. */
     password: string;
-}//userRegister
+}
 
+/**
+ * Successful registration response data.
+ */
 export interface RegisterSuccess {
     success: true;
+    /** HTTP status code for the response. */
     statusCode: number;
+    /** The unique identifier for the newly created user. */
     userId: string;
+    /** The registered email address. */
     email: string;
 }
 
+/**
+ * Error response data for registration failures.
+ */
 export interface RegisterError {
     success: false;
+    /** HTTP status code for the error response. */
     statusCode: number;
+    /** Human-readable error message. */
     error: string;
 }
 
-export type RegisterResponse = RegisterSuccess | RegisterError;//RegisterResponse
+/**
+ * Discriminated union for registration responses.
+ */
+export type RegisterResponse = RegisterSuccess | RegisterError;
 
+/**
+ * Structure for individual validation errors.
+ */
 export interface ValidationError {
+    /** The field that failed validation. */
     field: string;
+    /** Detailed message explaining why validation failed. */
     message: string;
-}//ValidationError
+}
 
+/**
+ * Utility class for user-related data validation.
+ */
 export class UserValidation {
     
+    /**
+     * Validates user registration data.
+     * @param data - The registration data to validate.
+     * @returns Object containing validation status and any error messages.
+     */
     static validateRegistration(data: {
         email: string;
         username: string;
@@ -41,7 +73,6 @@ export class UserValidation {
         if (!data.email) {
             errors.push({ field: "email", message: "Email is required" });
         } else {
-
             const emailRegex = /^[^\s@]+@([^\s@.,]+\.)+[^\s@.,]{2,}$/;
 
             if (!emailRegex.test(data.email)) {
@@ -97,18 +128,21 @@ export class UserValidation {
             isValid: errors.length === 0,
             errors
         };
-    }//validateRegistration
+    }
 
-    static validateLogin(data: userLogin): { isValid: boolean; errors: ValidationError[] } {
-
+    /**
+     * Validates user login credentials.
+     * @param data - The login data to validate.
+     * @returns Object containing validation status and any error messages.
+     */
+    static validateLogin(data: UserLogin): { isValid: boolean; errors: ValidationError[] } {
         const errors: ValidationError[] = [];
 
+        if (!data.email && !data.username) {
+            errors.push({ field: "identifier", message: "Either email or username is required" });
+        }
 
-        if (!data.email) { errors.push({ field: "email", message: "Email is required" }); }
-
-        if (!data.username) {errors.push({field: "username", message: "Username required"});}
-
-        //Email val
+        // Email validation (only if provided)
         if (data.email && data.email.length > 0) {
             const emailRegex = /^[^\s@]+@([^\s@.,]+\.)+[^\s@.,]{2,}$/;
             if (!emailRegex.test(data.email)) {
@@ -119,7 +153,7 @@ export class UserValidation {
             }
         }
 
-        //Username validation
+        // Username validation (only if provided)
         if (data.username && data.username.length > 0) {
             if (data.username.length < 3) {
                 errors.push({ field: "username", message: "Username must be at least 3 characters long" });
@@ -139,40 +173,62 @@ export class UserValidation {
         // Password validation
         if (!data.password) {
             errors.push({ field: "password", message: "Password is required" });
-        } else if (data.password.length < 1) {
-            errors.push({ field: "password", message: "Password cannot be empty" });
         }
 
         return {
-            isValid: errors.length===0,
+            isValid: errors.length === 0,
             errors
-        }
-    }//validateLogin
-}//UserValidation
+        };
+    }
+}
 
-export interface userLogin {
+/**
+ * Credentials for user authentication.
+ */
+export interface UserLogin {
+    /** Optional email identifier for login. */
     email?: string;
+    /** Optional username identifier for login. */
     username?: string;
+    /** Required password for authentication. */
     password: string;
 }
 
+/**
+ * Successful login response data containing authentication tokens.
+ */
 export interface LoginSuccess {
     success: true;
+    /** HTTP status code for the response. */
     statusCode: number;
+    /** The authenticated user's unique identifier. */
     userId: string;
+    /** The user's email address. */
     email: string;
+    /** The user's username. */
     username: string;
+    /** JWT access token for authorized requests. */
     accessToken: string;
+    /** JWT refresh token for obtaining new access tokens. */
     refreshToken: string;
 }
 
+/**
+ * Error response data for login failures.
+ */
 export interface LoginError {
     success: false;
+    /** HTTP status code for the error response. */
     statusCode: number;
+    /** Human-readable error message. */
     error: string;
 }
 
-export type loginResponse = LoginSuccess | LoginError;
+/**
+ * Discriminated union for login responses.
+ */
+export type LoginResponse = LoginSuccess | LoginError;
+
 
 
 

@@ -1,12 +1,28 @@
-import { FastifyRequest, FastifyReply } from "fastify";
+import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { UserService } from "../services/users.service";
-import { userRegister, UserValidation, userLogin } from "../types/user.type";
+import { UserRegister, UserValidation, UserLogin } from "../types/user.type";
 
-const userService = new UserService();
-
+/**
+ * Controller handling HTTP requests related to user management.
+ */
 export class UserController {
+    private userService: UserService;
 
-    async registerUser(request: FastifyRequest<{ Body: userRegister }>, reply: FastifyReply){
+    /**
+     * Initializes the UserController with a UserService.
+     * @param fastify - The Fastify application instance.
+     */
+    constructor(fastify: FastifyInstance) {
+        this.userService = new UserService(fastify);
+    }
+
+    /**
+     * Handles user registration requests.
+     * @param request - The Fastify request containing registration data in the body.
+     * @param reply - The Fastify reply object.
+     * @returns A promise that resolves to the HTTP response.
+     */
+    async registerUser(request: FastifyRequest<{ Body: UserRegister }>, reply: FastifyReply){
 
         try {
 
@@ -24,7 +40,7 @@ export class UserController {
             }
             //END_validation
 
-            const result = await userService.registerUser({ email, username, password });
+            const result = await this.userService.registerUser({ email, username, password });
 
             if (!result.success) {
 
@@ -40,9 +56,6 @@ export class UserController {
                 userId: result.userId
             });
 
-
-
-
         } catch (error) {
             return reply.status(500).send({ 
                 success: false,
@@ -51,29 +64,54 @@ export class UserController {
         }
     }//registerUser
 
-    async loginUser(request: FastifyRequest<{Body: userLogin}>, reply: FastifyReply){
+    /**
+     * Handles user login requests.
+     * @param request - The Fastify request containing login credentials in the body.
+     * @param reply - The Fastify reply object.
+     * @returns A promise that resolves to the HTTP response.
+     */
+    async loginUser(request: FastifyRequest<{Body: UserLogin}>, reply: FastifyReply){
 
         try {
 
             const {email, username, password} = request.body;
 
-            const identifier = email || username;
-
-            if (!identifier) {
+            const validation = UserValidation.validateLogin({ email, username, password });
+        
+            if (!validation.isValid) {
                 return reply.status(400).send({
                     success: false,
-                    error: "email or username required"
+                    error: "Validation failed",
+                    details: validation.errors
                 });
-            }//Check for username or email presence
+            }
 
-            const result = userService.loginUser({identifier, password});
+            const identifier = email || username;
 
+            const result = await this.userService.loginUser(identifier!, password);
 
+            if (!result.success) {
+                return reply.status(result.statusCode).send({
+                    success: false,
+                    error: result.error
+                });
+            }
 
-
+            return reply.status(200).send({
+                success: true,
+                userId: result.userId,
+                email: result.email,
+                username: result.username,
+                accessToken: result.accessToken,
+                refreshToken: result.refreshToken
+            });
         } catch (error) {
 
-
+            console.error("Login error:", error);
+            return reply.status(500).send({
+                success: false,
+                error: error instanceof Error ? error.message : "Internal server error"
+            });
         }
     }//loginUser
 

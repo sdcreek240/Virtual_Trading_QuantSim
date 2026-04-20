@@ -26,7 +26,9 @@ type DbInfoResult = {
   server_port: number | null;
 };
 
-// Health check
+/**
+ * Health check endpoint to verify server and database connectivity.
+ */
 app.get("/health", async () => {
   const startTime = Date.now();
   let dbStatus = "disconnected";
@@ -71,9 +73,12 @@ app.register(fastifyJwt, {
   sign: { expiresIn: "15m" },
 });
 
-// Register auth routes
-app.register(authRoutes);
+// Register auth routes with prefix
+app.register(authRoutes, { prefix: "/auth" });
 
+/**
+ * Initializes and starts the Fastify server.
+ */
 const start = async () => {
   try {
     const port = 3000;

@@ -1,18 +1,31 @@
 import { appendFile } from "node:fs";
 import { prisma } from "../lib/prisma";
-import { userRegister, RegisterResponse, userLogin, loginResponse } from "../types/user.type";
+import { UserRegister, RegisterResponse, UserLogin, LoginResponse } from "../types/user.type";
 import { hashPassword, comparePassword } from "../lib/auth";
 import { FastifyInstance } from 'fastify';
 
+/**
+ * Service handling user-related business logic such as registration and authentication.
+ */
 export class UserService {
 
     private fastify: FastifyInstance;
 
+    /**
+     * Initializes the UserService with a Fastify instance for accessing plugins (e.g., JWT).
+     * @param fastify - The Fastify application instance.
+     */
     constructor(fastify: FastifyInstance) {
         this.fastify = fastify;
     }
 
-    async registerUser(fields: userRegister): Promise<RegisterResponse> {
+    /**
+     * Registers a new user in the system.
+     * Checks for existing users with the same email or username before creation.
+     * @param fields - The user registration data.
+     * @returns A promise resolving to a RegisterResponse indicating success or failure.
+     */
+    async registerUser(fields: UserRegister): Promise<RegisterResponse> {
 
         const { email, username, password } = fields;
 
@@ -73,7 +86,14 @@ export class UserService {
         }
     }//END_registerUser
 
-    async loginUser(identifier: string, password: string): Promise<loginResponse> {
+    /**
+     * Authenticates a user using their email or username and password.
+     * Generates JWT access and refresh tokens upon successful authentication.
+     * @param identifier - The user's email or username.
+     * @param password - The user's plain-text password.
+     * @returns A promise resolving to a LoginResponse containing user data and tokens.
+     */
+    async loginUser(identifier: string, password: string): Promise<LoginResponse> {
 
         //find user
         const user = await prisma.user.findFirst({
@@ -120,6 +140,11 @@ export class UserService {
                 {userId: user.id},
                 {expiresIn: process.env.JWT_REFRESH_EXPIRES_IN}
         );
+
+        await prisma.user.update({
+            where: {id: user.id},
+            data: {lastLoginAt: new Date()}
+        })
 
         return {
             success: true,
