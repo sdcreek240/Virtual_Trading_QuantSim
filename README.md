@@ -13,7 +13,8 @@ Built for **real-time performance and rapid development using Node.js**.
 | Layer        | Technology                             |
 | ------------ | -------------------------------------- |
 | **Backend**  | Node.js (Fastify) + WebSockets (`ws`)  |
-| **Database** | PostgreSQL + Redis (caching & pub/sub) |
+| **Database** | PostgreSQL + Prisma (ORM) + Redis      |
+| **Auth**     | JWT + Bcrypt (Stateless Auth)          |
 | **Frontend** | React + TypeScript + TailwindCSS       |
 | **Charts**   | Lightweight Charts / Recharts          |
 | **Build**    | npm + Vite                             |
@@ -29,16 +30,16 @@ Client (React)
    ├── REST API (HTTP)
    │       ↓
    │   Node.js Backend (Fastify)
-   │       ├── Trade Engine (in-memory logic)
-   │       ├── Portfolio Service
-   │       ├── Market Data Service
-   │       └── Auth (future)
+   │       ├── Auth Service (JWT/Bcrypt) ✅
+   │       ├── Trade Engine (in-memory logic) 🚧
+   │       ├── Portfolio Service 🚧
+   │       └── Market Data Service 🛠️
    │
    ├── WebSocket Connection
    │       ↓
    │   Real-time Price + Order Updates
    │
-   ├── PostgreSQL (persistent data)
+   ├── PostgreSQL (persistent data via Prisma)
    │
    └── Redis
            ├── Cache (prices, sessions)
@@ -53,76 +54,51 @@ Client (React)
 Virtual_Trading_QuantSim/
 ├── backend/
 │   ├── src/
-│   │   ├── routes/        # REST endpoints
+│   │   ├── routes/        # REST endpoints (User, Market, etc.)
+│   │   ├── controllers/   # Request handlers
+│   │   ├── services/      # Business logic (User, DB, Redis)
+│   │   ├── middleware/    # Auth & Validation
 │   │   ├── websocket/     # WebSocket handlers
-│   │   ├── trading/       # Order execution logic
-│   │   ├── portfolio/     # Holdings & P&L
-│   │   ├── market/        # Market data ingestion
-│   │   ├── services/      # Shared services
 │   │   └── server.ts      # Entry point
-│   ├── tests/
+│   ├── prisma/            # Database schema & migrations
+│   ├── docs/              # API Contracts & Route docs
 │   ├── package.json
 │   └── tsconfig.json
 │
 ├── frontend/
 │   ├── src/
-│   │   ├── components/
-│   │   │   ├── Chart.tsx
-│   │   │   ├── TradeForm.tsx
-│   │   │   ├── Portfolio.tsx
-│   │   │   └── OrderBook.tsx
-│   │   ├── pages/
-│   │   ├── hooks/
-│   │   ├── store/
+│   │   ├── components/    # Chart.tsx, TradeForm.tsx, etc.
 │   │   └── App.tsx
 │   ├── package.json
 │   └── tailwind.config.js
 │
-├── database/
-│   ├── schema.sql
-│   └── migrations/
-│
-├── docker/
-│   ├── Dockerfile.backend
-│   ├── Dockerfile.frontend
-│   └── docker-compose.yml
-│
-├── docs/
-├── scripts/
-├── .gitignore
+├── docs/                  # System-wide documentation (Roadmap, Strategy)
+├── docker/                # Dockerfile.backend & docker-compose.yml
 └── README.md
 ```
 
 ---
 
-## 🌿 Branching Strategy (Solo Developer)
+## ⚙️ Core Features
 
-```text
-main ─────────────────────────────────────────►
-│
-├── feature/feature-name ───────────────┐
-├── fix/bug-description ────────────────┤
-└── experimental/idea ───────┘
-```
-
-### Rules
-
-| Branch           | Purpose           |
-| ---------------- | ----------------- |
-| `main`           | Always deployable |
-| `feature/*`      | New features      |
-| `fix/*`          | Bug fixes         |
-| `experimental/*` | Risky ideas       |
+* **Secure Authentication**: JWT-based login and registration with Bcrypt hashing.
+* **Real-time Streaming**: Price updates via WebSockets for low-latency trading.
+* **Scalable Database**: PostgreSQL for persistence and Redis for high-speed caching.
+* **Modern API**: Fastify-based REST endpoints with standardized response models.
 
 ---
 
-## ⚙️ Core Features
+## 📊 Project Status ✅
 
-* Real-time price streaming (WebSockets)
-* Instant trade execution (in-memory engine)
-* Portfolio tracking (P&L, positions)
-* Order book simulation
-* Market data ingestion (API-based)
+**Current Milestone:** Phase 2 (User & Auth) Complete. Moving to Phase 3 (Market Data).
+
+* ✅ **Phase 1: Infrastructure**: Fastify, Prisma, Redis, Docker setup complete.
+* ✅ **Phase 2: User & Auth**: Secure registration and login implemented.
+* 🛠️ **Phase 3: Market Data**: In progress. Asset discovery and price history.
+* 📋 **Phase 4: Trading Engine**: Planned. Core execution logic.
+* 🧪 **Phase 5: Testing**: Planned. Comprehensive testing strategy defined.
+
+See `docs/roadmap.md` for the full detailed roadmap.
 
 ---
 
@@ -131,11 +107,7 @@ main ─────────────────────────
 ### Prerequisites
 
 * Node.js 18+
-* PostgreSQL 14+
-* Redis (optional but recommended)
-* Docker (optional)
-
----
+* Docker & Docker Compose (for PostgreSQL/Redis)
 
 ### Quick Start
 
@@ -144,64 +116,23 @@ main ─────────────────────────
 git clone https://github.com/yourusername/Virtual_Trading_QuantSim.git
 cd Virtual_Trading_QuantSim
 
-# Backend
+# Setup Environment
 cd backend
-npm install
+cp .env.example .env
+
+# Launch Infrastructure (DB/Redis)
+npm run docker:up
+
+# Run Backend
 npm run dev
-
-# Frontend (new terminal)
-cd ../frontend
-npm install
-npm run dev
-```
-
-App runs at:
-
-```
-http://localhost:5173
 ```
 
 ---
 
-## 🐳 Using Docker
+## 🧪 Testing Strategy
 
-```bash
-docker-compose up --build
-```
-
----
-
-## 📊 Current Status 🚧 / ✅
-
-**Roadmap Coverage:** Phases 0-7 (Backend → Frontend Scaffold → First Prototype)
-
-* 🚧 Phase 0: Project initialization & dependencies
-* 🚧 Phase 1: Core backend (Fastify + config)
-* 🚧 Phase 2: WebSocket server integration
-* 🚧 Phase 3: Docker setup (PostgreSQL + Redis)
-* 🚧 Phase 4: Trade engine (in-memory logic)
-* 🚧 Phase 5: Market data integration
-* 🚧 Phase 6: First working prototype (end-to-end)
-* 🚧 Phase 7: Frontend setup (React + WebSocket hooks)
-
-See `docs/roadmap.md` for detailed implementation steps.
-
-**Not Yet Implemented:**
-* Authentication & user accounts
-* Persistent trade history
-* Real order matching engine
-* Live market data API integration
-* Advanced charting & analytics
-
----
-
-## 🧠 Future Scaling Plan
-
-When performance becomes a bottleneck:
-
-* Move trade execution engine → **C++ microservice**
-* Keep Node.js → API gateway
-* Use Redis → event streaming layer
+We follow a rigorous testing pyramid (Unit → Integration → E2E). 
+See `docs/testing_strategy.md` for our industry-standard testing approach.
 
 ---
 

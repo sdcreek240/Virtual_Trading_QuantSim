@@ -489,7 +489,7 @@ Price
 ### Authentication (Phase 8)
 
 ```
-Client → POST /auth/login → Backend
+Client → POST /user/login → Backend
          ↓ (validate credentials)
          ← JWT token
          → (include in all requests)
