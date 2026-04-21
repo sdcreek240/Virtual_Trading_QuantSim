@@ -8,7 +8,7 @@ import { UserController } from "../controllers/users.controllers";
  * 
  * @param app - The Fastify instance to register routes on.
  */
-export async function authRoutes(app: FastifyInstance) {
+export async function userRoutes(app: FastifyInstance) {
 
     const userController = new UserController(app);
 
@@ -16,9 +16,9 @@ export async function authRoutes(app: FastifyInstance) {
      * Sample protected route to verify authentication.
      * Requires a valid JWT token in the Authorization header.
      */
-    app.get("/protected", { preHandler: authenticate }, async () => {
-        return { message: "Protected data" };
-    });
+    // app.get("/protected", { preHandler: authenticate }, async () => {
+    //     return { message: "Protected data" };
+    // });
 
     /**
      * Route for new user registration.
@@ -29,4 +29,4 @@ export async function authRoutes(app: FastifyInstance) {
      * Route for user authentication (login).
      */
     app.post("/login", userController.loginUser.bind(userController));
-}//END_authRoutes
+}//END_userRoutes

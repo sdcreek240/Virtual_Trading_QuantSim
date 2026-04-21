@@ -4,7 +4,7 @@ import Fastify, { FastifyRequest, FastifyReply } from "fastify";
 import fastifyJwt from "@fastify/jwt";
 import { initWebSocket } from "./websocket/server";
 import { prisma } from "./lib/prisma";
-import { authRoutes } from "./routes/auth";
+import { userRoutes } from "./routes/users.route";
 
 const app = Fastify({ logger: false });
 
@@ -73,8 +73,8 @@ app.register(fastifyJwt, {
   sign: { expiresIn: "15m" },
 });
 
-// Register auth routes with prefix
-app.register(authRoutes, { prefix: "/auth" });
+// Register user routes with prefix
+app.register(userRoutes, { prefix: "/user" });
 
 /**
  * Initializes and starts the Fastify server.
