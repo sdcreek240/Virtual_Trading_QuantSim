@@ -24,19 +24,17 @@ export const stocks = [
 
 export function simulatePrice(stocks) {
   return stocks.map((stock) => {
-    // small realistic market movement
-    const change = (Math.random() - 0.5) * 0.8;
+    const change = (Math.random() - 0.5) * 2;
 
-    const newPrice = stock.price + change;
+    const newPrice = Math.max(1, stock.price + change);
+
+    const newHistory = [...stock.history, newPrice].slice(-10);
 
     return {
       ...stock,
-      price: +newPrice.toFixed(2),
-      change: +change.toFixed(2),
-      history: [
-        ...stock.history.slice(1),
-        newPrice,
-      ],
+      price: Number(newPrice.toFixed(2)),
+      change: Number(change.toFixed(2)),
+      history: newHistory,
     };
   });
 }

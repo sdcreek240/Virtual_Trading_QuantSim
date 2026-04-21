@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -9,22 +8,55 @@
 
 body {
   background:
-    radial-gradient(circle at top, rgba(99,102,241,0.18), transparent 50%),
-    radial-gradient(circle at bottom, rgba(34,211,238,0.12), transparent 60%),
+    radial-gradient(circle at 20% 20%, rgba(99,102,241,0.15), transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(34,211,238,0.12), transparent 40%),
     #0b0f1a;
 
   color: white;
   font-family: ui-sans-serif, system-ui;
 }
 
-/* smoother rendering */
+/* smooth rendering */
 * {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 /* =========================
-   FINTECH CARD ANIMATIONS
+   GLASS CARD SYSTEM (NEW CORE)
+========================= */
+
+.glass-card {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 1rem;
+  transition: all 0.25s ease;
+}
+
+.glass-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 0 25px rgba(99,102,241,0.25);
+}
+
+/* =========================
+   MICRO INTERACTIONS
+========================= */
+
+.btn-micro {
+  transition: all 0.2s ease;
+}
+
+.btn-micro:hover {
+  transform: scale(1.03);
+}
+
+.btn-micro:active {
+  transform: scale(0.98);
+}
+
+/* =========================
+   PRICE FLASH EFFECTS
 ========================= */
 
 @keyframes pulseGreen {
@@ -45,17 +77,4 @@ body {
 
 .animate-pulse-red {
   animation: pulseRed 2.5s infinite;
-}
-
-/* =========================
-   OPTIONAL SMOOTH FADE IN
-========================= */
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.4s ease-out;
 }

@@ -1,22 +1,13 @@
-import Sidebar from "../components/Sidebar";
 import { Outlet } from "react-router-dom";
+import Sidebar from "../components/Sidebar";
 
 function MainLayout() {
   return (
-    <div className="min-h-screen bg-[#0b0f1a] text-white">
+    <div className="flex min-h-screen bg-[#0b0f1a] text-white">
 
       <Sidebar />
 
-      <main
-        className="
-          pt-16 md:pt-0
-          ml-16 md:ml-16
-          md:group-hover:ml-56
-
-          p-6
-          transition-all duration-300
-        "
-      >
+      <main className="flex-1 h-screen overflow-y-auto p-6">
         <Outlet />
       </main>
 
