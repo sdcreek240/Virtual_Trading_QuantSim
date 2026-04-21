@@ -1,5 +1,6 @@
 import { usePortfolio } from "../context/PortfolioContext";
 import { stocks } from "../data/stocks";
+import CountUp from "react-countup";
 
 export default function Portfolio() {
   const { portfolio, cash } = usePortfolio();
@@ -8,15 +9,16 @@ export default function Portfolio() {
     ([symbol, amount]) => {
       const stock = stocks.find((s) => s.symbol === symbol);
 
-      const currentPrice = stock?.price || 0;
-      const value = currentPrice * amount;
-      const costBasis = (stock?.price || 0) * amount * 0.95; // simulated entry price
+      const price = stock?.price || 0;
+      const value = price * amount;
+
+      const costBasis = price * amount * 0.95; // simulated entry price
       const pnl = value - costBasis;
 
       return {
         symbol,
         amount,
-        price: currentPrice,
+        price,
         value,
         pnl,
       };
@@ -30,6 +32,9 @@ export default function Portfolio() {
 
   const totalPortfolioValue = totalHoldings + cash;
 
+  const gainers = enrichedHoldings.filter((s) => s.pnl >= 0);
+  const losers = enrichedHoldings.filter((s) => s.pnl < 0);
+
   return (
     <div className="p-6 space-y-6 text-white">
 
@@ -37,7 +42,7 @@ export default function Portfolio() {
       <div>
         <h1 className="text-3xl font-bold">Portfolio</h1>
         <p className="text-gray-400 text-sm">
-          Your holdings and performance overview
+          Investment performance overview
         </p>
       </div>
 
@@ -67,6 +72,45 @@ export default function Portfolio() {
 
       </div>
 
+      {/* 🟢 WINNERS / 🔴 LOSERS */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+        <div className="p-5 rounded-2xl bg-white/5 border border-white/10">
+          <h2 className="font-bold text-cyan-400 mb-3">Winners</h2>
+
+          {gainers.length === 0 ? (
+            <p className="text-gray-400 text-sm">No gains yet</p>
+          ) : (
+            gainers.map((s) => (
+              <div key={s.symbol} className="flex justify-between text-sm py-1">
+                <span>{s.symbol}</span>
+                <span className="text-cyan-400">
+                  +{s.pnl.toFixed(2)}
+                </span>
+              </div>
+            ))
+          )}
+        </div>
+
+        <div className="p-5 rounded-2xl bg-white/5 border border-white/10">
+          <h2 className="font-bold text-pink-400 mb-3">Losers</h2>
+
+          {losers.length === 0 ? (
+            <p className="text-gray-400 text-sm">No losses</p>
+          ) : (
+            losers.map((s) => (
+              <div key={s.symbol} className="flex justify-between text-sm py-1">
+                <span>{s.symbol}</span>
+                <span className="text-pink-400">
+                  {s.pnl.toFixed(2)}
+                </span>
+              </div>
+            ))
+          )}
+        </div>
+
+      </div>
+
       {/* HOLDINGS TABLE */}
       <div className="p-5 rounded-2xl bg-white/5 border border-white/10">
 
@@ -89,7 +133,6 @@ export default function Portfolio() {
                 "
               >
 
-                {/* LEFT */}
                 <div>
                   <p className="font-bold">{h.symbol}</p>
                   <p className="text-xs text-gray-400">
@@ -97,7 +140,6 @@ export default function Portfolio() {
                   </p>
                 </div>
 
-                {/* CENTER */}
                 <div className="text-right">
                   <p>${h.value.toFixed(2)}</p>
                   <p

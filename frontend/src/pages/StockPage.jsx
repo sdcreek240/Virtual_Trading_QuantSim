@@ -1,124 +1,282 @@
 import { useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { stocks } from "../data/stocks";
 import { usePortfolio } from "../context/PortfolioContext";
 
-function StockPage() {
+import {
+  LineChart,
+  Line,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+
+export default function StockPage() {
   const { symbol } = useParams();
-  const { buyStock, sellStock, portfolio } = usePortfolio();
+  const { buyStock, sellStock } = usePortfolio();
 
   const stock = stocks.find((s) => s.symbol === symbol);
 
+  const [price, setPrice] = useState(stock?.price || 0);
+  const [qty, setQty] = useState(1);
+  const [watchlist, setWatchlist] = useState([]);
+
+  const [orderType, setOrderType] = useState("buy");
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  // 📊 chart history
+  const [history, setHistory] = useState(
+    stock?.history?.map((p) => ({ price: p })) || []
+  );
+
+  // load watchlist
+  useEffect(() => {
+    const saved = JSON.parse(localStorage.getItem("watchlist") || "[]");
+    setWatchlist(saved);
+  }, []);
+
+  const isWatched = watchlist.includes(symbol);
+
+  function toggleWatchlist() {
+    let updated;
+
+    if (isWatched) {
+      updated = watchlist.filter((s) => s !== symbol);
+    } else {
+      updated = [...watchlist, symbol];
+    }
+
+    setWatchlist(updated);
+    localStorage.setItem("watchlist", JSON.stringify(updated));
+  }
+
+  // 📈 live price + chart updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPrice((prev) => {
+        const change = (Math.random() - 0.5) * 1.5;
+        const newPrice = Math.max(1, prev + change);
+
+        setHistory((prevHistory) => {
+          const updated = [...prevHistory, { price: newPrice }];
+          return updated.slice(-40); // keep chart clean
+        });
+
+        return newPrice;
+      });
+    }, 1200);
+
+    return () => clearInterval(interval);
+  }, []);
+
   if (!stock) {
     return (
-      <div className="p-6">
-        <h2>Stock not found</h2>
+      <div className="p-6 text-white">
+        Stock not found
       </div>
     );
   }
 
   const isPositive = stock.change >= 0;
-  const ownedAmount = portfolio[stock.symbol] || 0;
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 text-white space-y-6">
 
       {/* HEADER */}
-      <div>
-        <h2 className="text-3xl font-bold">
-          {stock.name} ({stock.symbol})
-        </h2>
-        <p className="text-gray-400 mt-1">
-          Real-time market simulation
-        </p>
-      </div>
+      <div className="flex justify-between items-start">
 
-      {/* PRICE CARD */}
-      <div className="
-        bg-white/5 backdrop-blur-md
-        p-6 rounded-2xl
-        border border-white/10
+        <div>
+          <h1 className="text-3xl font-bold">
+            {stock.symbol}
+          </h1>
+          <p className="text-gray-400">
+            {stock.name}
+          </p>
+        </div>
 
-        shadow-[0_0_30px_rgba(99,102,241,0.2)]
-        transition-all duration-300
-        hover:scale-[1.02]
-      ">
-        <p className="text-4xl font-bold">
-          ${stock.price.toFixed(2)}
-        </p>
-
-        <p
+        {/* WATCHLIST */}
+        <button
+          onClick={toggleWatchlist}
           className={`
-            mt-2 text-lg font-semibold
-            ${isPositive ? "text-cyan-400" : "text-pink-500"}
+            text-2xl transition hover:scale-110
+            ${isWatched ? "text-yellow-400" : "text-gray-500"}
           `}
         >
+          ★
+        </button>
+
+      </div>
+
+      {/* PRICE */}
+      <div className="flex items-end gap-4">
+        <h2 className="text-4xl font-bold">
+          ${price.toFixed(2)}
+        </h2>
+
+        <p className={isPositive ? "text-cyan-400" : "text-pink-500"}>
           {isPositive ? "+" : ""}
           {stock.change}%
         </p>
-
-        <p className="text-gray-400 mt-2 text-sm">
-          You own: {ownedAmount} shares
-        </p>
       </div>
 
-      {/* CHART PLACEHOLDER */}
-      <div className="
-        bg-white/5 backdrop-blur-md
-        p-6 rounded-2xl
-        border border-white/10
-        h-64
+      {/* MAIN GRID */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
-        flex items-center justify-center
-        text-gray-400
+        {/* 📊 CHART */}
+        <div className="lg:col-span-2 glass-card p-5 h-[400px]">
 
-        shadow-[0_0_30px_rgba(34,211,238,0.15)]
-      ">
-        Full Chart Coming Soon 📈
-      </div>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={history}>
 
-      {/* ACTION BUTTONS */}
-      <div className="flex gap-4">
+              <XAxis hide />
+              <YAxis domain={["auto", "auto"]} hide />
 
-        <button
-          onClick={() => buyStock(stock.symbol, stock.price)}
-          className="
-            flex-1
-            bg-cyan-500/80
-            hover:bg-cyan-400
-            px-6 py-3
-            rounded-xl
-            font-semibold
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "rgba(0,0,0,0.7)",
+                  border: "none",
+                  borderRadius: "8px",
+                }}
+                formatter={(value) => [`$${value.toFixed(2)}`, "Price"]}
+              />
 
-            transition-all duration-200
-            hover:scale-[1.05]
-            hover:shadow-[0_0_20px_rgba(34,211,238,0.4)]
-          "
-        >
-          Buy
-        </button>
+              <Line
+                type="monotone"
+                dataKey="price"
+                stroke="#22d3ee"
+                strokeWidth={2}
+                dot={false}
+                animationDuration={300}
+              />
 
-        <button
-          onClick={() => sellStock(stock.symbol, stock.price)}
-          className="
-            flex-1
-            bg-pink-500/80
-            hover:bg-pink-400
-            px-6 py-3
-            rounded-xl
-            font-semibold
+            </LineChart>
+          </ResponsiveContainer>
 
-            transition-all duration-200
-            hover:scale-[1.05]
-            hover:shadow-[0_0_20px_rgba(236,72,153,0.4)]
-          "
-        >
-          Sell
-        </button>
+        </div>
+
+        {/* 💰 TRADE PANEL */}
+        <div className="glass-card p-5 space-y-4">
+
+          <h2 className="text-lg font-bold">Trade</h2>
+
+          {/* BUY / SELL */}
+          <div className="flex gap-2">
+
+            <button
+              onClick={() => setOrderType("buy")}
+              className={`flex-1 py-1 rounded-lg transition
+                ${orderType === "buy"
+                  ? "bg-cyan-500/30 text-cyan-300"
+                  : "bg-white/5 text-gray-400"
+                }`}
+            >
+              Buy
+            </button>
+
+            <button
+              onClick={() => setOrderType("sell")}
+              className={`flex-1 py-1 rounded-lg transition
+                ${orderType === "sell"
+                  ? "bg-pink-500/30 text-pink-300"
+                  : "bg-white/5 text-gray-400"
+                }`}
+            >
+              Sell
+            </button>
+
+          </div>
+
+          {/* QUANTITY */}
+          <input
+            type="number"
+            min="1"
+            value={qty}
+            onChange={(e) => setQty(Number(e.target.value))}
+            className="
+              w-full p-2 rounded-lg
+              bg-black/30 border border-white/10
+              outline-none
+            "
+          />
+
+          {/* ORDER PREVIEW */}
+          <div className="text-sm text-gray-400">
+            Order Preview: <br />
+            {orderType.toUpperCase()} {qty} {symbol} @ ${price.toFixed(2)}
+            <br />
+            <span className="text-white font-bold">
+              Total: ${(price * qty).toFixed(2)}
+            </span>
+          </div>
+
+          {/* REVIEW */}
+          <button
+            onClick={() => setShowConfirm(true)}
+            className={`
+              w-full py-2 rounded-lg transition
+              ${orderType === "buy"
+                ? "bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30"
+                : "bg-pink-500/20 text-pink-400 hover:bg-pink-500/30"
+              }
+            `}
+          >
+            Review Order
+          </button>
+
+          {/* CONFIRM MODAL */}
+          {showConfirm && (
+            <div className="mt-4 p-4 rounded-lg bg-black/40 border border-white/10 space-y-3">
+
+              <p className="font-bold">Confirm Order</p>
+
+              <p className="text-sm text-gray-400">
+                {orderType.toUpperCase()} {qty} {symbol}
+              </p>
+
+              <p className="text-white font-bold">
+                ${(price * qty).toFixed(2)}
+              </p>
+
+              <div className="flex gap-2">
+
+                <button
+                  onClick={() => setShowConfirm(false)}
+                  className="flex-1 py-1 rounded-lg bg-white/10 text-gray-300"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={() => {
+                    if (orderType === "buy") {
+                      buyStock(symbol, price, qty);
+                    } else {
+                      sellStock(symbol, price, qty);
+                    }
+
+                    setShowConfirm(false);
+                  }}
+                  className={`
+                    flex-1 py-1 rounded-lg
+                    ${orderType === "buy"
+                      ? "bg-cyan-500/20 text-cyan-400"
+                      : "bg-pink-500/20 text-pink-400"
+                    }
+                  `}
+                >
+                  Confirm
+                </button>
+
+              </div>
+
+            </div>
+          )}
+
+        </div>
 
       </div>
 
     </div>
   );
 }
-
-export default StockPage;

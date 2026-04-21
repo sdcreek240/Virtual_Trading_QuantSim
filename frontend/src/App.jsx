@@ -8,18 +8,22 @@ import Portfolio from "./pages/Portfolio";
 import Markets from "./pages/Markets";
 import Watchlist from "./pages/Watchlist";
 import Settings from "./pages/Settings";
+import StockPage from "./pages/StockPage"; // ⭐ ADDED
 
 import Login from "./pages/Login";
 
 function App() {
-  const auth = useAuth();
-const user = auth?.user;
+  const { user } = useAuth();
 
+  // 🚨 prevent crash if context not ready
+  if (user === undefined) return null;
+
+  // 🔐 AUTH GATE
   if (!user) {
     return (
       <Routes>
-        <Route path="*" element={<Navigate to="/login" />} />
         <Route path="/login" element={<Login />} />
+        <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     );
   }
@@ -27,16 +31,24 @@ const user = auth?.user;
   return (
     <Routes>
 
-      {/* Protected App */}
+      {/* 🔐 PROTECTED APP */}
       <Route element={<MainLayout />}>
+
+        {/* MAIN ROUTES */}
         <Route path="/" element={<Dashboard />} />
         <Route path="/portfolio" element={<Portfolio />} />
         <Route path="/markets" element={<Markets />} />
         <Route path="/watchlist" element={<Watchlist />} />
         <Route path="/settings" element={<Settings />} />
+
+        {/* ⭐ STOCK DETAIL PAGE (FIXED) */}
+        <Route path="/stock/:symbol" element={<StockPage />} />
+
       </Route>
 
+      {/* fallback */}
       <Route path="/login" element={<Login />} />
+      <Route path="*" element={<Navigate to="/" />} />
 
     </Routes>
   );

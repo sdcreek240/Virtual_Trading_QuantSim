@@ -1,70 +1,83 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 
 const PortfolioContext = createContext();
 
 export function PortfolioProvider({ children }) {
   const [portfolio, setPortfolio] = useState({});
   const [cash, setCash] = useState(10000);
-  const [history, setHistory] = useState([]);
 
-  function addToHistory(type, symbol, price, amount) {
-    setHistory((prev) => [
-      {
-        type,
-        symbol,
-        price,
-        amount,
-        time: new Date().toLocaleTimeString(),
-      },
-      ...prev,
-    ]);
-  }
+  // format:
+  // portfolio = {
+  //   AAPL: { qty: 2, avgPrice: 150 }
+  // }
 
-  function buyStock(symbol, price, amount = 1) {
-    const cost = price * amount;
+  function buyStock(symbol, price, qty = 1) {
+    const cost = price * qty;
 
     if (cash < cost) return { error: "Not enough cash" };
 
-    setCash((prev) => prev - cost);
+    setCash((c) => c - cost);
 
-    setPortfolio((prev) => ({
-      ...prev,
-      [symbol]: (prev[symbol] || 0) + amount,
-    }));
+    setPortfolio((prev) => {
+      const existing = prev[symbol];
 
-    addToHistory("BUY", symbol, price, amount);
+      if (!existing) {
+        return {
+          ...prev,
+          [symbol]: { qty, avgPrice: price },
+        };
+      }
+
+      // update weighted average price
+      const newQty = existing.qty + qty;
+      const newAvg =
+        (existing.avgPrice * existing.qty + price * qty) / newQty;
+
+      return {
+        ...prev,
+        [symbol]: {
+          qty: newQty,
+          avgPrice: newAvg,
+        },
+      };
+    });
 
     return { success: true };
   }
 
-  function sellStock(symbol, price, amount = 1) {
-    const current = portfolio[symbol] || 0;
+  function sellStock(symbol, price, qty = 1) {
+    const position = portfolio[symbol];
 
-    if (current < amount) {
+    if (!position || position.qty < qty) {
       return { error: "Not enough shares" };
     }
 
-    setPortfolio((prev) => ({
-      ...prev,
-      [symbol]: prev[symbol] - amount,
-    }));
+    setCash((c) => c + price * qty);
 
-    setCash((prev) => prev + price * amount);
+    setPortfolio((prev) => {
+      const updatedQty = prev[symbol].qty - qty;
 
-    addToHistory("SELL", symbol, price, amount);
+      if (updatedQty === 0) {
+        const copy = { ...prev };
+        delete copy[symbol];
+        return copy;
+      }
+
+      return {
+        ...prev,
+        [symbol]: {
+          ...prev[symbol],
+          qty: updatedQty,
+        },
+      };
+    });
 
     return { success: true };
   }
 
   return (
     <PortfolioContext.Provider
-      value={{
-        portfolio,
-        cash,
-        history,
-        buyStock,
-        sellStock,
-      }}
+      value={{ portfolio, cash, buyStock, sellStock }}
     >
       {children}
     </PortfolioContext.Provider>

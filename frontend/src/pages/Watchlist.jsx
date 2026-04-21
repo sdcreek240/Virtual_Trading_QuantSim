@@ -1,67 +1,94 @@
-import { usePortfolio } from "../context/PortfolioContext";
+import { useEffect, useState } from "react";
+import { stocks } from "../data/stocks";
+import { useNavigate } from "react-router-dom";
 
 export default function Watchlist() {
-  const { history } = usePortfolio();
+  const [watchlist, setWatchlist] = useState([]);
+  const navigate = useNavigate(); // ⭐ NEW
+
+  // load from localStorage
+  useEffect(() => {
+    const saved = JSON.parse(localStorage.getItem("watchlist") || "[]");
+    setWatchlist(saved);
+  }, []);
+
+  const removeFromWatchlist = (symbol) => {
+    const updated = watchlist.filter((s) => s !== symbol);
+    setWatchlist(updated);
+    localStorage.setItem("watchlist", JSON.stringify(updated));
+  };
+
+  const watchlistStocks = stocks.filter((s) =>
+    watchlist.includes(s.symbol)
+  );
 
   return (
-    <div className="p-6 text-white space-y-6">
+    <div className="p-6 space-y-6 text-white">
 
+      {/* HEADER */}
       <div>
-        <h1 className="text-3xl font-bold">Trade History</h1>
+        <h1 className="text-3xl font-bold">Watchlist</h1>
         <p className="text-gray-400 text-sm">
-          Your executed trades
+          Track your favourite stocks
         </p>
       </div>
 
-      <div className="p-5 rounded-2xl bg-white/5 border border-white/10">
+      {/* EMPTY STATE */}
+      {watchlistStocks.length === 0 ? (
+        <div className="glass-card p-6 text-gray-400">
+          No stocks in watchlist yet
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
 
-        {history.length === 0 ? (
-          <p className="text-gray-400">No trades yet</p>
-        ) : (
-          <div className="space-y-3">
+          {watchlistStocks.map((stock) => (
+            <div
+              key={stock.symbol}
+              onClick={() => navigate(`/stock/${stock.symbol}`)} // ⭐ NAVIGATION
+              className="glass-card p-5 space-y-2 cursor-pointer hover:scale-[1.02] transition"
+            >
 
-            {history.map((t, i) => (
-              <div
-                key={i}
-                className="
-                  flex justify-between items-center
-                  p-3 rounded-lg
-                  bg-black/20
-                  hover:bg-purple-500/10
-                  transition
-                "
-              >
+              <div className="flex justify-between items-center">
 
-                {/* LEFT */}
                 <div>
-                  <p className={
-                    t.type === "BUY"
-                      ? "text-cyan-400 font-bold"
-                      : "text-pink-500 font-bold"
-                  }>
-                    {t.type}
-                  </p>
-
+                  <p className="font-bold">{stock.symbol}</p>
                   <p className="text-sm text-gray-400">
-                    {t.symbol} • {t.amount} share(s)
+                    {stock.name}
                   </p>
                 </div>
 
-                {/* RIGHT */}
-                <div className="text-right">
-                  <p>${t.price.toFixed(2)}</p>
-                  <p className="text-xs text-gray-400">
-                    {t.time}
-                  </p>
-                </div>
+                {/* 🛑 STOP CLICK PROPAGATION */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation(); // ⭐ prevents card click
+                    removeFromWatchlist(stock.symbol);
+                  }}
+                  className="text-pink-400 text-sm hover:text-pink-300"
+                >
+                  Remove
+                </button>
 
               </div>
-            ))}
 
-          </div>
-        )}
+              <p className="text-2xl font-bold">
+                ${stock.price.toFixed(2)}
+              </p>
 
-      </div>
+              <p
+                className={
+                  stock.change >= 0
+                    ? "text-cyan-400"
+                    : "text-pink-500"
+                }
+              >
+                {stock.change}%
+              </p>
+
+            </div>
+          ))}
+
+        </div>
+      )}
 
     </div>
   );

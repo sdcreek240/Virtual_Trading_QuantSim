@@ -2,10 +2,14 @@ import { useEffect, useState } from "react";
 import { stocks as initialStocks, simulatePrice } from "../data/stocks";
 import StockCard from "../components/StockCard";
 import { usePortfolio } from "../context/PortfolioContext";
+import CountUp from "react-countup";
 
-export default function Dashboard() {
+function Dashboard() {
   const [data, setData] = useState(initialStocks || []);
-  const { portfolio = {}, cash = 10000 } = usePortfolio() || {};
+
+  const portfolioCtx = usePortfolio();
+  const portfolio = portfolioCtx?.portfolio || {};
+  const cash = portfolioCtx?.cash || 10000;
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -15,43 +19,58 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, []);
 
+  // 💰 CURRENT VALUE (MARKET VALUE)
   const portfolioValue = Object.entries(portfolio).reduce(
-    (total, [symbol, amount]) => {
+    (total, [symbol, position]) => {
       const stock = data.find((s) => s.symbol === symbol);
-      return total + (stock ? stock.price * amount : 0);
+      if (!stock) return total;
+
+      return total + stock.price * position.qty;
     },
     0
   );
 
-  const totalValue = portfolioValue + cash;
-  const pnl = totalValue - 10000;
+  // 📉 INVESTED VALUE (ENTRY COST BASIS)
+  const investedValue = Object.entries(portfolio).reduce(
+    (total, [symbol, position]) => {
+      return total + position.avgPrice * position.qty;
+    },
+    0
+  );
+
+  // 📊 REAL PnL
+  const pnl = portfolioValue - investedValue;
   const isPositive = pnl >= 0;
+
+  const totalValue = portfolioValue + cash;
 
   const bestStock = data.length
     ? [...data].sort((a, b) => (b.change || 0) - (a.change || 0))[0]
     : null;
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 text-white">
 
       {/* HEADER */}
       <div>
         <h2 className="text-3xl font-bold">Market Dashboard</h2>
-        <p className="text-gray-400 text-sm">
-          Real-time simulated trading environment
+        <p className="text-gray-400 text-sm mt-1">
+          Real-time trading simulation engine
         </p>
       </div>
 
-      {/* KPI */}
+      {/* KPI CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
 
         <div className="glass-card p-5">
-          <p className="text-gray-400 text-sm">Total Portfolio</p>
-          <p className="text-2xl font-bold">${totalValue.toFixed(2)}</p>
+          <p className="text-gray-400 text-sm">Portfolio Value</p>
+          <p className="text-2xl font-bold">
+            ${totalValue.toFixed(2)}
+          </p>
         </div>
 
         <div className="glass-card p-5">
-          <p className="text-gray-400 text-sm">PnL</p>
+          <p className="text-gray-400 text-sm">PnL (Real)</p>
           <p className={`text-2xl font-bold ${isPositive ? "text-cyan-400" : "text-pink-500"}`}>
             {isPositive ? "+" : ""}${pnl.toFixed(2)}
           </p>
@@ -59,7 +78,9 @@ export default function Dashboard() {
 
         <div className="glass-card p-5">
           <p className="text-gray-400 text-sm">Cash</p>
-          <p className="text-2xl font-bold">${cash.toFixed(2)}</p>
+          <p className="text-2xl font-bold">
+            ${cash.toFixed(2)}
+          </p>
         </div>
 
       </div>
@@ -87,3 +108,5 @@ export default function Dashboard() {
     </div>
   );
 }
+
+export default Dashboard;
