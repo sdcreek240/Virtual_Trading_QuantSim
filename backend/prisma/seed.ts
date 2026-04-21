@@ -1,5 +1,6 @@
+import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, AssetType, TradeSide, UserRole, Decimal } from "@prisma/client";
 import { createHash } from "crypto";
 import "dotenv/config";
 
@@ -8,23 +9,9 @@ if (!process.env.DATABASE_URL) {
 }
 
 const connectionString = process.env.DATABASE_URL;
-const adapter = new PrismaPg({ connectionString });
-
-const prisma = new (PrismaClient as any)({
-  adapter,
-  log: ["error", "warn"],
-});
-
-// ---------------------------------------------------------------------------
-// Enums (mirrored from schema)
-// ---------------------------------------------------------------------------
-
-const AssetType = { STOCK: "STOCK", CRYPTO: "CRYPTO", ETF: "ETF" } as const;
-const TradeSide = { BUY: "BUY", SELL: "SELL" } as const;
-const TradeStatus = { PENDING: "PENDING", EXECUTED: "EXECUTED", CANCELLED: "CANCELLED" } as const;
-
-type TradeSideType = typeof TradeSide[keyof typeof TradeSide];
-type TradeStatusType = typeof TradeStatus[keyof typeof TradeStatus];
+const pool = new Pool({ connectionString });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -36,36 +23,30 @@ function hashPassword(plain: string): string {
 
 function daysAgo(n: number): Date {
   const d = new Date();
+  d.setHours(0, 0, 0, 0);
   d.setDate(d.getDate() - n);
   return d;
 }
 
 // ---------------------------------------------------------------------------
-// 1. Assets (matches your Asset model)
+// Data Constants
 // ---------------------------------------------------------------------------
 
 const ASSETS = [
-  // Stocks
-  { symbol: "AAPL", name: "Apple Inc.", type: AssetType.STOCK, exchange: "NASDAQ" },
-  { symbol: "MSFT", name: "Microsoft Corporation", type: AssetType.STOCK, exchange: "NASDAQ" },
-  { symbol: "GOOGL", name: "Alphabet Inc.", type: AssetType.STOCK, exchange: "NASDAQ" },
-  { symbol: "AMZN", name: "Amazon.com Inc.", type: AssetType.STOCK, exchange: "NASDAQ" },
-  { symbol: "TSLA", name: "Tesla Inc.", type: AssetType.STOCK, exchange: "NASDAQ" },
-  { symbol: "NVDA", name: "NVIDIA Corporation", type: AssetType.STOCK, exchange: "NASDAQ" },
-  { symbol: "JPM", name: "JPMorgan Chase & Co.", type: AssetType.STOCK, exchange: "NYSE" },
-  { symbol: "XOM", name: "Exxon Mobil Corporation", type: AssetType.STOCK, exchange: "NYSE" },
-  // Crypto
-  { symbol: "BTC-USD", name: "Bitcoin", type: AssetType.CRYPTO, exchange: null },
-  { symbol: "ETH-USD", name: "Ethereum", type: AssetType.CRYPTO, exchange: null },
-  { symbol: "SOL-USD", name: "Solana", type: AssetType.CRYPTO, exchange: null },
-  // ETFs
-  { symbol: "SPY", name: "SPDR S&P 500 ETF", type: AssetType.ETF, exchange: "NYSE" },
-  { symbol: "QQQ", name: "Invesco QQQ Trust", type: AssetType.ETF, exchange: "NASDAQ" },
+  { symbol: "AAPL", name: "Apple Inc.", type: AssetType.STOCK, exchange: "NASDAQ", sector: "Technology", industry: "Consumer Electronics" },
+  { symbol: "MSFT", name: "Microsoft Corporation", type: AssetType.STOCK, exchange: "NASDAQ", sector: "Technology", industry: "Software—Infrastructure" },
+  { symbol: "GOOGL", name: "Alphabet Inc.", type: AssetType.STOCK, exchange: "NASDAQ", sector: "Technology", industry: "Internet Content & Information" },
+  { symbol: "AMZN", name: "Amazon.com Inc.", type: AssetType.STOCK, exchange: "NASDAQ", sector: "Consumer Cyclical", industry: "Internet Retail" },
+  { symbol: "TSLA", name: "Tesla Inc.", type: AssetType.STOCK, exchange: "NASDAQ", sector: "Consumer Cyclical", industry: "Auto Manufacturers" },
+  { symbol: "NVDA", name: "NVIDIA Corporation", type: AssetType.STOCK, exchange: "NASDAQ", sector: "Technology", industry: "Semiconductors" },
+  { symbol: "JPM", name: "JPMorgan Chase & Co.", type: AssetType.STOCK, exchange: "NYSE", sector: "Financial Services", industry: "Banks—Diversified" },
+  { symbol: "XOM", name: "Exxon Mobil Corporation", type: AssetType.STOCK, exchange: "NYSE", sector: "Energy", industry: "Oil & Gas Integrated" },
+  { symbol: "BTC-USD", name: "Bitcoin", type: AssetType.CRYPTO, exchange: null, sector: "Technology", industry: "Digital Assets" },
+  { symbol: "ETH-USD", name: "Ethereum", type: AssetType.CRYPTO, exchange: null, sector: "Technology", industry: "Digital Assets" },
+  { symbol: "SOL-USD", name: "Solana", type: AssetType.CRYPTO, exchange: null, sector: "Technology", industry: "Digital Assets" },
+  { symbol: "SPY", name: "SPDR S&P 500 ETF", type: AssetType.ETF, exchange: "NYSE", sector: "Financial Services", industry: "Exchange Traded Fund" },
+  { symbol: "QQQ", name: "Invesco QQQ Trust", type: AssetType.ETF, exchange: "NASDAQ", sector: "Financial Services", industry: "Exchange Traded Fund" },
 ];
-
-// ---------------------------------------------------------------------------
-// 2. Market data (matches your MarketData model, relates to Asset via symbol)
-// ---------------------------------------------------------------------------
 
 const MARKET_DATA = [
   { symbol: "AAPL", price: 213.45, volume: 58200000, high24h: 215.80, low24h: 211.20, changePercent: 1.23 },
@@ -83,30 +64,13 @@ const MARKET_DATA = [
   { symbol: "QQQ", price: 468.40, volume: 41300000, high24h: 471.00, low24h: 465.80, changePercent: 1.18 },
 ];
 
-// ---------------------------------------------------------------------------
-// 3. Users
-// ---------------------------------------------------------------------------
-
 const USERS = [
-  { email: "aidan@quantsim.dev", username: "aidan", passwordHash: hashPassword("password123"), balance: 74320.50 },
-  { email: "alice@quantsim.dev", username: "alice_trades", passwordHash: hashPassword("password123"), balance: 100000.00 },
-  { email: "bob@quantsim.dev", username: "bob_the_bull", passwordHash: hashPassword("password123"), balance: 12450.75 },
+  { email: "aidan@quantsim.dev", username: "aidan", passwordHash: hashPassword("password123"), balance: new Decimal(74320.50), role: UserRole.ADMIN },
+  { email: "alice@quantsim.dev", username: "alice_trades", passwordHash: hashPassword("password123"), balance: new Decimal(100000.00), role: UserRole.USER },
+  { email: "bob@quantsim.dev", username: "bob_the_bull", passwordHash: hashPassword("password123"), balance: new Decimal(12450.75), role: UserRole.USER },
 ];
 
-// ---------------------------------------------------------------------------
-// 4. Trades per user
-// ---------------------------------------------------------------------------
-
-type TradeInput = {
-  symbol: string;
-  side: TradeSideType;
-  quantity: number;
-  price: number;
-  createdAt: Date;
-  status?: TradeStatusType;
-};
-
-const TRADES_BY_USER: Record<string, TradeInput[]> = {
+const TRADES_BY_USER: Record<string, any[]> = {
   aidan: [
     { symbol: "AAPL", side: TradeSide.BUY, quantity: 20, price: 195.10, createdAt: daysAgo(30) },
     { symbol: "AAPL", side: TradeSide.BUY, quantity: 10, price: 200.50, createdAt: daysAgo(15) },
@@ -117,48 +81,53 @@ const TRADES_BY_USER: Record<string, TradeInput[]> = {
     { symbol: "SPY", side: TradeSide.BUY, quantity: 10, price: 530.00, createdAt: daysAgo(45) },
   ],
   bob_the_bull: [
-    { symbol: "TSLA", side: TradeSide.BUY, quantity: 50, price: 220.00, createdAt: daysAgo(60) },
-    { symbol: "TSLA", side: TradeSide.BUY, quantity: 30, price: 235.00, createdAt: daysAgo(40) },
-    { symbol: "TSLA", side: TradeSide.SELL, quantity: 20, price: 260.00, createdAt: daysAgo(20) },
-    { symbol: "ETH-USD", side: TradeSide.BUY, quantity: 3.5, price: 3100, createdAt: daysAgo(50) },
-    { symbol: "ETH-USD", side: TradeSide.SELL, quantity: 1.0, price: 3350, createdAt: daysAgo(12) },
-    { symbol: "AMZN", side: TradeSide.BUY, quantity: 15, price: 182.00, createdAt: daysAgo(35) },
-    { symbol: "SOL-USD", side: TradeSide.BUY, quantity: 25, price: 130.00, createdAt: daysAgo(18) },
-    { symbol: "SOL-USD", side: TradeSide.BUY, quantity: 15, price: 142.00, createdAt: daysAgo(8) },
-  ],
+    { symbol: "TSLA", side: TradeSide.BUY, quantity: 50, price: 220.00, createdAt: daysAgo(40) },
+    { symbol: "TSLA", side: TradeSide.SELL, quantity: 10, price: 240.00, createdAt: daysAgo(20) },
+    { symbol: "TSLA", side: TradeSide.BUY, quantity: 20, price: 235.00, createdAt: daysAgo(10) },
+    { symbol: "ETH-USD", side: TradeSide.BUY, quantity: 5.5, price: 3000.00, createdAt: daysAgo(15) },
+    { symbol: "QQQ", side: TradeSide.BUY, quantity: 15, price: 450.00, createdAt: daysAgo(5) },
+  ]
+};
+
+const WATCHLISTS: Record<string, string[]> = {
+  aidan: ["TSLA", "SOL-USD", "MSFT", "BTC-USD"],
+  alice_trades: ["AAPL", "GOOGL", "AMZN"],
+  bob_the_bull: ["ETH-USD", "NVDA", "JPM"],
 };
 
 // ---------------------------------------------------------------------------
-// Derive portfolio positions from trade history
+// Logic
 // ---------------------------------------------------------------------------
 
-type Position = { quantity: number; totalCost: number };
-
-function derivePortfolio(trades: TradeInput[]): Record<string, Position> {
-  const positions: Record<string, Position> = {};
-  for (const t of trades) {
-    if (!positions[t.symbol]) positions[t.symbol] = { quantity: 0, totalCost: 0 };
-    const pos = positions[t.symbol];
-    if (t.side === TradeSide.BUY) {
-      pos.quantity += t.quantity;
-      pos.totalCost += t.quantity * t.price;
-    } else {
-      const costPerUnit = pos.quantity > 0 ? pos.totalCost / pos.quantity : t.price;
-      pos.quantity -= t.quantity;
-      pos.totalCost -= costPerUnit * t.quantity;
-    }
+function generatePriceHistory(symbol: string, basePrice: number, days: number) {
+  const history = [];
+  let currentPrice = basePrice * Math.pow(0.98, days); // Start lower and walk up to current
+  
+  for (let i = days; i >= 0; i--) {
+    const date = daysAgo(i);
+    const variance = (Math.random() - 0.45) * 0.04; // Slightly biased upwards
+    const open = currentPrice;
+    const close = currentPrice * (1 + variance);
+    const high = Math.max(open, close) * (1 + Math.random() * 0.015);
+    const low = Math.min(open, close) * (1 - Math.random() * 0.015);
+    
+    history.push({
+      symbol,
+      open: new Decimal(open.toFixed(4)),
+      high: new Decimal(high.toFixed(4)),
+      low: new Decimal(low.toFixed(4)),
+      close: new Decimal(close.toFixed(4)),
+      volume: new Decimal((Math.random() * 10000000 + 1000000).toFixed(0)),
+      timestamp: date,
+      interval: "1d",
+    });
+    currentPrice = close;
   }
-  return Object.fromEntries(
-    Object.entries(positions).filter(([, p]) => p.quantity > 0.000001)
-  );
+  return history;
 }
 
-// ---------------------------------------------------------------------------
-// Main
-// ---------------------------------------------------------------------------
-
 async function main() {
-  console.log("🌱 Starting seed...\n");
+  console.log("🌱 Starting full database seed...");
 
   // 1. Seed Assets
   console.log("  → Seeding assets...");
@@ -169,35 +138,48 @@ async function main() {
       create: asset,
     });
   }
-  console.log(`     ✓ ${ASSETS.length} assets`);
 
-  // 2. Seed Market Data (relates to Asset via symbol)
-  console.log("  → Seeding market data...");
+  // 2. Seed Market Data & History
+  console.log("  → Seeding market data and price history...");
   for (const md of MARKET_DATA) {
     await prisma.marketData.upsert({
-    where: { id: md.symbol },
-    update: {
-        price: md.price,
-        volume: md.volume,
-        high24h: md.high24h,
-        low24h: md.low24h,
-        changePercent: md.changePercent,
-    },
-    create: {
-        id: md.symbol,
+      where: { symbol: md.symbol },
+      update: {
+        price: new Decimal(md.price),
+        volume: new Decimal(md.volume),
+        high24h: new Decimal(md.high24h),
+        low24h: new Decimal(md.low24h),
+        changePercent: new Decimal(md.changePercent),
+      },
+      create: {
         symbol: md.symbol,
-        price: md.price,
-        volume: md.volume,
-        high24h: md.high24h,
-        low24h: md.low24h,
-        changePercent: md.changePercent,
-    },
+        price: new Decimal(md.price),
+        volume: new Decimal(md.volume),
+        high24h: new Decimal(md.high24h),
+        low24h: new Decimal(md.low24h),
+        changePercent: new Decimal(md.changePercent),
+      },
     });
-  }
-  console.log(`     ✓ ${MARKET_DATA.length} market snapshots`);
 
-  // 3. Seed Users, Trades, and Portfolios
-  console.log("  → Seeding users, trades, and portfolios...");
+    // Seed 30 days of history for ALL assets
+    const history = generatePriceHistory(md.symbol, md.price, 30);
+    for (const h of history) {
+      await prisma.priceHistory.upsert({
+        where: { 
+            symbol_timestamp_interval: { 
+                symbol: h.symbol, 
+                timestamp: h.timestamp, 
+                interval: h.interval 
+            } 
+        },
+        update: h,
+        create: h,
+      });
+    }
+  }
+
+  // 3. Seed Users, Trades, Portfolios, and Watchlists
+  console.log("  → Seeding users and deriving portfolios...");
   for (const userData of USERS) {
     const user = await prisma.user.upsert({
       where: { email: userData.email },
@@ -205,46 +187,77 @@ async function main() {
       create: userData,
     });
 
-    // Clear existing trades so re-runs don't duplicate
+    // Clear existing dynamic data to ensure a fresh derived state
     await prisma.trade.deleteMany({ where: { userId: user.id } });
+    await prisma.portfolio.deleteMany({ where: { userId: user.id } });
+    await prisma.watchlist.deleteMany({ where: { userId: user.id } });
 
-    const userTrades = TRADES_BY_USER[user.username] ?? [];
+    // Seed Watchlist
+    const watchlistSymbols = WATCHLISTS[user.username] || [];
+    for (const sym of watchlistSymbols) {
+        await prisma.watchlist.create({
+            data: { userId: user.id, symbol: sym }
+        });
+    }
 
-    for (const t of userTrades) {
+    // Seed Trades & Calculate Portfolio
+    const trades = TRADES_BY_USER[user.username] ?? [];
+    const portfolioMap: Record<string, { quantity: number; totalCost: number }> = {};
+
+    for (const t of trades) {
+      const total = new Decimal(t.quantity * t.price);
       await prisma.trade.create({
         data: {
           userId: user.id,
           symbol: t.symbol,
           side: t.side,
-          quantity: t.quantity,
-          price: t.price,
-          total: parseFloat((t.quantity * t.price).toFixed(2)),
-          status: t.status ?? TradeStatus.EXECUTED,
+          quantity: new Decimal(t.quantity),
+          price: new Decimal(t.price),
+          total: total,
           createdAt: t.createdAt,
         },
       });
+
+      // Portfolio tracking
+      if (!portfolioMap[t.symbol]) {
+        portfolioMap[t.symbol] = { quantity: 0, totalCost: 0 };
+      }
+      const p = portfolioMap[t.symbol];
+      if (t.side === TradeSide.BUY) {
+        p.quantity += t.quantity;
+        p.totalCost += t.quantity * t.price;
+      } else {
+        // Simple weighted average for cost basis reduction
+        const avgPrice = p.totalCost / p.quantity;
+        p.quantity -= t.quantity;
+        p.totalCost -= avgPrice * t.quantity;
+      }
     }
 
-    const positions = derivePortfolio(userTrades);
-    for (const [symbol, pos] of Object.entries(positions)) {
-      const avgPrice = parseFloat((pos.totalCost / pos.quantity).toFixed(2));
-      await prisma.portfolio.upsert({
-        where: { userId_symbol: { userId: user.id, symbol } },
-        update: { quantity: pos.quantity, avgPrice },
-        create: { userId: user.id, symbol, quantity: pos.quantity, avgPrice },
-      });
+    // Save derived portfolio
+    for (const [symbol, data] of Object.entries(portfolioMap)) {
+      if (data.quantity > 0) {
+        await prisma.portfolio.create({
+          data: {
+            userId: user.id,
+            symbol: symbol,
+            quantity: new Decimal(data.quantity.toFixed(8)),
+            avgPrice: new Decimal((data.totalCost / data.quantity).toFixed(4)),
+          },
+        });
+      }
     }
-
-    console.log(`     ✓ @${user.username} — ${userTrades.length} trades, ${Object.keys(positions).length} open positions`);
   }
 
-  console.log("\n✅ Seed complete!");
-  console.log("\n  Credentials (password: 'password123'):");
-  console.log("  aidan         — mixed portfolio, partial sells");
-  console.log("  alice_trades  — fresh account, $100k untouched");
-  console.log("  bob_the_bull  — heavy trader, low cash remaining\n");
+  console.log("\n✅ Database seeding completed successfully!");
 }
 
 main()
-  .catch((e) => { console.error("❌ Seed failed:", e); process.exit(1); })
-  .finally(async () => { await prisma.$disconnect(); });
+  .catch((e) => {
+    console.error("❌ Seed failed:", e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+    await pool.end();
+  });

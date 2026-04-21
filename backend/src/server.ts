@@ -1,17 +1,23 @@
 import "dotenv/config";
 
-import Fastify from "fastify";
+import Fastify, { FastifyRequest, FastifyReply } from "fastify";
+import fastifyJwt from "@fastify/jwt";
 import { initWebSocket } from "./websocket/server";
-import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "./lib/prisma";
+import { userRoutes } from "./routes/users.route";
 
-const connectionString = process.env.DATABASE_URL!;
-const adapter = new PrismaPg({ connectionString });
-const prisma = new PrismaClient({ adapter });
+const app = Fastify({ logger: false });
 
-const app = Fastify({
-//   logger: true  // Enable built-in logging
-});
+
+// Auth middleware as a simple function (not decorated)
+async function authenticate(request: FastifyRequest, reply: FastifyReply) {
+  try {
+    await request.jwtVerify();
+  } catch (err) {
+    reply.status(401).send({ error: "Unauthorized" });
+    throw err;
+  }
+}
 
 type DbInfoResult = {
   database_name: string;
@@ -20,6 +26,9 @@ type DbInfoResult = {
   server_port: number | null;
 };
 
+/**
+ * Health check endpoint to verify server and database connectivity.
+ */
 app.get("/health", async () => {
   const startTime = Date.now();
   let dbStatus = "disconnected";
@@ -27,13 +36,11 @@ app.get("/health", async () => {
   let dbDetails = {};
 
   try {
-    // Test database connection with a simple query
     const dbStart = Date.now();
-    await prisma.$queryRaw`SELECT 1 as connected, current_database() as db_name, current_user as db_user, version() as db_version`;
+    await prisma.$queryRaw`SELECT 1 as connected`;
     dbLatency = Date.now() - dbStart;
     dbStatus = "connected";
     
-    // Get detailed database info
     const dbInfo = await prisma.$queryRaw<DbInfoResult[]>`
       SELECT 
         current_database() as database_name,
@@ -41,55 +48,50 @@ app.get("/health", async () => {
         inet_server_addr() as server_address,
         inet_server_port() as server_port
     `;
-    
     dbDetails = dbInfo[0] || {};
   } catch (error) {
     dbStatus = "disconnected";
-
-    if (error instanceof Error) {
-      dbDetails = { error: error.message };
-    } else {
-      dbDetails = { error: "Unknown database error" };
-    }
+    dbDetails = { error: error instanceof Error ? error.message : "Unknown error" };
   }
-
-  const responseTime = Date.now() - startTime;
 
   return {
     status: dbStatus === "connected" ? "healthy" : "unhealthy",
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
-    responseTime: `${responseTime}ms`,
-    database: {
-      status: dbStatus,
-      latency: dbLatency ? `${dbLatency}ms` : null,
-      ...dbDetails
-    },
-    services: {
-      websocket: "ready",
-      http: "running"
-    }
+    responseTime: `${Date.now() - startTime}ms`,
+    database: { status: dbStatus, latency: dbLatency ? `${dbLatency}ms` : null, ...dbDetails },
+    services: { websocket: "ready", http: "running" }
   };
 });
 
-app.get("/favicon.ico", async (req, reply) => { reply.status(204).send(); });
+app.get("/favicon.ico", async (req, reply) => reply.status(204).send());
+app.get("/", async () => ({ message: "QuantSim Trading API is running" }));
 
-app.get("/", async () => { return { message: "QuantSim Trading API is running" }; });
+// Register JWT plugin
+app.register(fastifyJwt, {
+  secret: process.env.JWT_SECRET!,
+  sign: { expiresIn: "15m" },
+});
 
+// Register user routes with prefix
+app.register(userRoutes, { prefix: "/user" });
+
+/**
+ * Initializes and starts the Fastify server.
+ */
 const start = async () => {
   try {
     const port = 3000;
     const host = "0.0.0.0";
 
-    const server = await app.listen({ port: port, host: host});
-    initWebSocket(app.server);    
+    await app.listen({ port, host });
+    initWebSocket(app.server);
 
-    console.log(`🚀 QuantSim backend running at http://${host}:${port}`);
+    console.log(`\n🚀 QuantSim backend running at http://${host}:${port}`);
     console.log(`📊 Health check: http://${host}:${port}/health`);
-    console.log(`🔌 WebSocket ready: ws://${host}:${port}`);
-    
+    console.log(`🔌 WebSocket ready: ws://${host}:${port}\n`);
   } catch (err) {
-    app.log.error(err);
+    console.error(err);
     process.exit(1);
   }
 };

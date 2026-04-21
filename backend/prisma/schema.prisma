@@ -6,7 +6,7 @@ datasource db {
   provider = "postgresql"
 }
 
-//ENUMS
+// ENUMS
 enum AssetType {
   STOCK
   CRYPTO
@@ -23,46 +23,60 @@ enum TradeStatus {
   EXECUTED
   CANCELLED
 }
-//END_ENUMS
 
-//MODELS:
+enum UserRole {
+  USER
+  ADMIN
+}
 
 // User accounts
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  username     String   @unique
+  id           String    @id @default(cuid())
+  email        String    @unique
+  username     String    @unique
   passwordHash String
-  balance      Float    @default(100000.00) // Virtual cash balance
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  balance      Decimal   @default(100000.00) @db.Decimal(20, 2)
+  role         UserRole  @default(USER)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   portfolios Portfolio[]
   trades     Trade[]
+  watchlists Watchlist[]
 }
 
-// Tradeable assets registry — used for seeding and validation
+// Tradeable assets registry
 model Asset {
-  id       String    @id @default(cuid())
-  symbol   String    @unique // e.g. "AAPL", "BTC-USD"
-  name     String            // e.g. "Apple Inc.", "Bitcoin"
-  type     AssetType
-  exchange String?           // e.g. "NASDAQ", "NYSE", null for crypto
+  id          String    @id @default(cuid())
+  symbol      String    @unique
+  name        String
+  type        AssetType
+  exchange    String?
+  sector      String?
+  industry    String?
+  description String?    @db.Text
+  logoUrl     String?
 
-  marketData MarketData?
+  marketData   MarketData?
+  portfolios   Portfolio[]
+  trades       Trade[]
+  watchlists   Watchlist[]
+  priceHistory PriceHistory[]
 }
 
 // What a user currently holds
 model Portfolio {
-  id       String @id @default(cuid())
+  id       String  @id @default(cuid())
   userId   String
   symbol   String
-  quantity Float  @default(0)  // Float to support fractional crypto
-  avgPrice Float               // Average purchase price (cost basis)
+  quantity Decimal @default(0) @db.Decimal(24, 8)
+  avgPrice Decimal @db.Decimal(20, 4)
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  asset Asset @relation(fields: [symbol], references: [symbol])
 
-  @@unique([userId, symbol]) // One row per user per asset
+  @@unique([userId, symbol])
 }
 
 // Immutable record of every executed trade
@@ -71,28 +85,60 @@ model Trade {
   userId    String
   symbol    String
   side      TradeSide
-  quantity  Float                        // Float for fractional shares/crypto
-  price     Float                        // Execution price
-  total     Float                        // quantity * price (denormalised for speed)
+  quantity  Decimal     @db.Decimal(24, 8)
+  price     Decimal     @db.Decimal(20, 4)
+  total     Decimal     @db.Decimal(20, 2)
   status    TradeStatus @default(EXECUTED)
   createdAt DateTime    @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  asset Asset @relation(fields: [symbol], references: [symbol])
 
   @@index([userId])
   @@index([symbol])
 }
 
-// Latest market snapshot — one row per symbol, updated by the market service
+// Latest market snapshot
 model MarketData {
   id            String   @id @default(cuid())
   symbol        String   @unique
-  price         Float
-  volume        Float?
-  high24h       Float?
-  low24h        Float?
-  changePercent Float?   // % change vs previous close — useful for dashboard movers
+  price         Decimal  @db.Decimal(20, 4)
+  volume        Decimal? @db.Decimal(30, 2)
+  high24h       Decimal? @db.Decimal(20, 4)
+  low24h        Decimal? @db.Decimal(20, 4)
+  changePercent Decimal? @db.Decimal(8, 2)
   updatedAt     DateTime @updatedAt
 
-  asset Asset? @relation(fields: [symbol], references: [symbol])
+  asset Asset @relation(fields: [symbol], references: [symbol], onDelete: Cascade)
+}
+
+// Historical price data
+model PriceHistory {
+  id        String   @id @default(cuid())
+  symbol    String
+  open      Decimal  @db.Decimal(20, 4)
+  high      Decimal  @db.Decimal(20, 4)
+  low       Decimal  @db.Decimal(20, 4)
+  close     Decimal  @db.Decimal(20, 4)
+  volume    Decimal? @db.Decimal(30, 2)
+  timestamp DateTime
+  interval  String   @default("1d")
+
+  asset Asset @relation(fields: [symbol], references: [symbol], onDelete: Cascade)
+
+  @@unique([symbol, timestamp, interval])
+  @@index([symbol, timestamp])
+}
+
+// Users tracking assets
+model Watchlist {
+  id        String   @id @default(cuid())
+  userId    String
+  symbol    String
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  asset Asset @relation(fields: [symbol], references: [symbol], onDelete: Cascade)
+
+  @@unique([userId, symbol])
 }
