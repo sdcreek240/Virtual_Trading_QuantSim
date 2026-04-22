@@ -2,6 +2,7 @@ import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { stocks } from "../data/stocks";
 import { usePortfolio } from "../context/PortfolioContext";
+import { useToast } from "../context/ToastContext";
 
 import {
   LineChart,
@@ -15,6 +16,7 @@ import {
 export default function StockPage() {
   const { symbol } = useParams();
   const { buyStock, sellStock } = usePortfolio();
+  const { showToast } = useToast();
 
   const stock = stocks.find((s) => s.symbol === symbol);
 
@@ -43,8 +45,22 @@ export default function StockPage() {
 
     if (isWatched) {
       updated = watchlist.filter((s) => s !== symbol);
+      showToast(
+  <div className="flex items-center gap-2">
+    <img src="/logo-tx.png" className="w-4 h-4" />
+    Bought {qty} {symbol} @ ${price.toFixed(2)}
+  </div>,
+  "error"
+);
     } else {
       updated = [...watchlist, symbol];
+      showToast(
+  <div className="flex items-center gap-2">
+    <img src="/logo-tx.png" className="w-4 h-4" />
+    Bought {qty} {symbol} @ ${price.toFixed(2)}
+  </div>,
+  "success"
+);
     }
 
     setWatchlist(updated);
@@ -60,7 +76,7 @@ export default function StockPage() {
 
         setHistory((prevHistory) => {
           const updated = [...prevHistory, { price: newPrice }];
-          return updated.slice(-40); // keep chart clean
+          return updated.slice(-40);
         });
 
         return newPrice;
@@ -72,7 +88,7 @@ export default function StockPage() {
 
   if (!stock) {
     return (
-      <div className="p-6 text-white">
+      <div className="p-6 text-gray-900 dark:text-white">
         Stock not found
       </div>
     );
@@ -81,16 +97,16 @@ export default function StockPage() {
   const isPositive = stock.change >= 0;
 
   return (
-    <div className="p-6 text-white space-y-6">
+    <div className="p-6 space-y-6">
 
       {/* HEADER */}
       <div className="flex justify-between items-start">
 
         <div>
-          <h1 className="text-3xl font-bold">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             {stock.symbol}
           </h1>
-          <p className="text-gray-400">
+          <p className="text-gray-500 dark:text-gray-400">
             {stock.name}
           </p>
         </div>
@@ -100,7 +116,7 @@ export default function StockPage() {
           onClick={toggleWatchlist}
           className={`
             text-2xl transition hover:scale-110
-            ${isWatched ? "text-yellow-400" : "text-gray-500"}
+            ${isWatched ? "text-yellow-400" : "text-gray-400"}
           `}
         >
           ★
@@ -110,7 +126,7 @@ export default function StockPage() {
 
       {/* PRICE */}
       <div className="flex items-end gap-4">
-        <h2 className="text-4xl font-bold">
+        <h2 className="text-4xl font-bold text-gray-900 dark:text-white">
           ${price.toFixed(2)}
         </h2>
 
@@ -158,7 +174,9 @@ export default function StockPage() {
         {/* 💰 TRADE PANEL */}
         <div className="glass-card p-5 space-y-4">
 
-          <h2 className="text-lg font-bold">Trade</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+            Trade
+          </h2>
 
           {/* BUY / SELL */}
           <div className="flex gap-2">
@@ -166,9 +184,10 @@ export default function StockPage() {
             <button
               onClick={() => setOrderType("buy")}
               className={`flex-1 py-1 rounded-lg transition
-                ${orderType === "buy"
-                  ? "bg-cyan-500/30 text-cyan-300"
-                  : "bg-white/5 text-gray-400"
+                ${
+                  orderType === "buy"
+                    ? "bg-cyan-500/20 text-cyan-500"
+                    : "bg-gray-200 text-gray-600 dark:bg-white/5 dark:text-gray-400"
                 }`}
             >
               Buy
@@ -177,9 +196,10 @@ export default function StockPage() {
             <button
               onClick={() => setOrderType("sell")}
               className={`flex-1 py-1 rounded-lg transition
-                ${orderType === "sell"
-                  ? "bg-pink-500/30 text-pink-300"
-                  : "bg-white/5 text-gray-400"
+                ${
+                  orderType === "sell"
+                    ? "bg-pink-500/20 text-pink-500"
+                    : "bg-gray-200 text-gray-600 dark:bg-white/5 dark:text-gray-400"
                 }`}
             >
               Sell
@@ -195,17 +215,18 @@ export default function StockPage() {
             onChange={(e) => setQty(Number(e.target.value))}
             className="
               w-full p-2 rounded-lg
-              bg-black/30 border border-white/10
+              bg-white border border-gray-300
+              dark:bg-black/30 dark:border-white/10
               outline-none
             "
           />
 
           {/* ORDER PREVIEW */}
-          <div className="text-sm text-gray-400">
+          <div className="text-sm text-gray-500 dark:text-gray-400">
             Order Preview: <br />
             {orderType.toUpperCase()} {qty} {symbol} @ ${price.toFixed(2)}
             <br />
-            <span className="text-white font-bold">
+            <span className="text-gray-900 dark:text-white font-bold">
               Total: ${(price * qty).toFixed(2)}
             </span>
           </div>
@@ -215,26 +236,27 @@ export default function StockPage() {
             onClick={() => setShowConfirm(true)}
             className={`
               w-full py-2 rounded-lg transition
-              ${orderType === "buy"
-                ? "bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30"
-                : "bg-pink-500/20 text-pink-400 hover:bg-pink-500/30"
+              ${
+                orderType === "buy"
+                  ? "bg-cyan-500/20 text-cyan-500 hover:bg-cyan-500/30"
+                  : "bg-pink-500/20 text-pink-500 hover:bg-pink-500/30"
               }
             `}
           >
             Review Order
           </button>
 
-          {/* CONFIRM MODAL */}
+          {/* CONFIRM */}
           {showConfirm && (
-            <div className="mt-4 p-4 rounded-lg bg-black/40 border border-white/10 space-y-3">
+            <div className="mt-4 p-4 rounded-lg bg-black/40 border border-white/10 space-y-3 dark:bg-black/40 bg-gray-100 dark:text-white text-gray-900">
 
               <p className="font-bold">Confirm Order</p>
 
-              <p className="text-sm text-gray-400">
+              <p className="text-sm opacity-70">
                 {orderType.toUpperCase()} {qty} {symbol}
               </p>
 
-              <p className="text-white font-bold">
+              <p className="font-bold">
                 ${(price * qty).toFixed(2)}
               </p>
 
@@ -242,7 +264,7 @@ export default function StockPage() {
 
                 <button
                   onClick={() => setShowConfirm(false)}
-                  className="flex-1 py-1 rounded-lg bg-white/10 text-gray-300"
+                  className="flex-1 py-1 rounded-lg bg-gray-200 dark:bg-white/10"
                 >
                   Cancel
                 </button>
@@ -251,17 +273,27 @@ export default function StockPage() {
                   onClick={() => {
                     if (orderType === "buy") {
                       buyStock(symbol, price, qty);
+
+                      showToast(
+                        `Bought ${qty} ${symbol} @ $${price.toFixed(2)}`,
+                        "success"
+                      );
                     } else {
                       sellStock(symbol, price, qty);
+
+                      showToast(
+                        `Sold ${qty} ${symbol} @ $${price.toFixed(2)}`,
+                        "error"
+                      );
                     }
 
                     setShowConfirm(false);
                   }}
-                  className={`
-                    flex-1 py-1 rounded-lg
-                    ${orderType === "buy"
-                      ? "bg-cyan-500/20 text-cyan-400"
-                      : "bg-pink-500/20 text-pink-400"
+                  className={`flex-1 py-1 rounded-lg
+                    ${
+                      orderType === "buy"
+                        ? "bg-cyan-500/20 text-cyan-500"
+                        : "bg-pink-500/20 text-pink-500"
                     }
                   `}
                 >
