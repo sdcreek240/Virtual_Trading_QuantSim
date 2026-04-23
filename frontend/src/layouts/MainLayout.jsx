@@ -1,6 +1,7 @@
 import { Outlet, useLocation } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import { AnimatePresence, motion } from "framer-motion";
+import AIChat from "../components/AIChat";
 
 function MainLayout() {
   const location = useLocation();
@@ -27,6 +28,7 @@ function MainLayout() {
         </AnimatePresence>
 
       </div>
+      <AIChat />
     </div>
   );
 }
