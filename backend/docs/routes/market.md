@@ -1,25 +1,6 @@
 # Market API Contract
 
-## GET `/assets`
-Returns a list of all tradeable assets.
-
-**Query Params:**
-- `search` (optional): Filter by name or symbol
-- `type` (optional): `STOCK`, `CRYPTO`, or `ETF`
-
-**Response (200):**
-```json
-[
-  {
-    "symbol": "AAPL",
-    "name": "Apple Inc.",
-    "type": "STOCK",
-    "exchange": "NASDAQ"
-  }
-]
-```
-
-## GET `/assets/:symbol/history`
+## GET `/market/:symbol/history`
 Returns historical OHLCV data for an asset.
 
 **Query Params:**
@@ -38,4 +19,15 @@ Returns historical OHLCV data for an asset.
     "volume": "58200000"
   }
 ]
+```
+
+## GET `/market/ticker`
+Returns the latest price snapshots for all active assets (from Redis cache).
+
+**Response (200):**
+```json
+{
+  "AAPL": { "price": "213.45", "change": "+1.2%" },
+  "BTC": { "price": "64500.00", "change": "-2.5%" }
+}
 ```

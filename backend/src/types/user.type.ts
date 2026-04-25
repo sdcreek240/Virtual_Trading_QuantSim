@@ -1,5 +1,3 @@
-import { InternalEventTargetEventProperties } from "node:events";
-
 /**
  * Data required for user registration.
  */

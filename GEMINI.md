@@ -18,12 +18,18 @@ This file provides foundational context and mandates for AI agents working on th
 - **Type Safety**: Ensure strict TypeScript usage. Define types in `src/types/`.
 - **Documentation**: Keep `backend/docs/` updated when changing routes or database models.
 
+## 🔄 Collaboration & Sync Protocol
+- **Shared Brain**: Before starting any task, read `agents_collaboration/brain.md`.
+- **Sync Routine**: Follow the "Wake Up" and "Shutdown" routines defined in the Brain.
+- **Shared Folder**: `agents_collaboration/` is the authoritative directory for planning, sync, and context.
+
 ## 🤖 AI Context
-- Detailed project context is maintained in agents_collaboration/PROJECT_CONTEXT.md.
-- Always check agents_collaboration/ERD.md before making database changes.
-- Copilot-specific agent coordination and responsibilities are in COPILOT.md at the repo root.
-- agents_collaboration is the shared planning & context folder used by AI agents (Copilot and Gemini). Keep important context, plans, and sync artifacts here.
+- **TiffEx Persona**: If asked to initialize as "TiffEx", adopt the persona in `agents_collaboration/personas/TiffEx.md`.
+- **Database Source of Truth**: Always check `agents_collaboration/db/DATA_DICTIONARY.md` and `agents_collaboration/db/ERD.md`.
+- **API Contracts**: Refer to `agents_collaboration/API_CONTRACTS.md` for endpoint overviews.
+- **Project Context**: Detailed architectural info is in `agents_collaboration/PROJECT_CONTEXT.md`.
+- **Copilot Role**: Shared mandates and sync procedures for Copilot are in `COPILOT.md`.
 
 ## 🧪 Testing
 - Follow the strategy in `docs/testing_strategy.md`.
-- New features **must** include integration tests in the `backend/test/` directory (or wherever tests are located).
+- New features **must** include integration tests in the `backend/test/` directory.

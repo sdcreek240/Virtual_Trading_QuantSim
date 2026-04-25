@@ -23,26 +23,26 @@
 - [ ] Live price streaming via WebSocket
 - [ ] Historical data retrieval (OHLCV)
 - [ ] Market snapshot caching in Redis
+- [ ] Frontend Market Explorer & Asset Search
 
-## 💸 Phase 4: Trading Engine (The Core)
-- [ ] Trade execution logic (BUY/SELL)
+## 💸 Phase 4: Trading Engine (Core Development)
+- [ ] Trade execution logic (BUY/SELL) - *In-Memory First*
 - [ ] Portfolio cost-basis calculation engine
-- [ ] Order history tracking
-- [ ] Balance validation & updates
+- [ ] Order history tracking & Audit Logs
+- [ ] Balance validation (Virtual Cash)
 
-## 🧪 Phase 5: Testing & Quality Assurance
-- [ ] Unit testing setup (Vitest/Jest)
+## 🎨 Phase 5: Interactive UI & Dashboard
+- [ ] Refactor Frontend to Modular Feature-Based Architecture
+- [ ] Real-time charts integration (Lightweight Charts)
+- [ ] Trade Form with instant feedback
+- [ ] Portfolio overview & performance tracking (ROI)
+
+## 🧪 Phase 6: Testing & Quality Assurance
+- [ ] Unit testing (Vitest/Jest) for Trading Engine
 - [ ] Integration testing for API endpoints
-- [ ] E2E testing for critical flows (Trading)
-- [ ] CI/CD pipeline integration
-
-## 🎨 Phase 6: Frontend Dashboard
-- [ ] React + Tailwind setup
-- [ ] Live price charts (Recharts/Lightweight Charts)
-- [ ] Interactive trade form
-- [ ] Portfolio overview & performance tracking
+- [ ] E2E testing for critical flows (Registration -> Trade -> Portfolio)
 
 ---
 
 ### Current Focus:
-Implementing the Market Data service and preparing for a rigorous testing phase to ensure system reliability.
+Implementing the **Market Data Service** (Phase 3) and refactoring the **Frontend** (Phase 5 prep) to ensure long-term modularity as defined in `docs/FRONTEND_ARCHITECTURE.md`.

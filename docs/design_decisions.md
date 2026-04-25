@@ -45,6 +45,33 @@
 
 **Decision:** ✅ **Fastify** — best balance of speed, simplicity, and WebSocket support
 
+## Backend Framework & Language Evolution
+
+### Initial Proposal vs. Current State
+
+The original project proposal (found in `docs/Virtual_Trading_Platform.pdf`) envisioned a high-performance backend built entirely in **Modern C++**. However, for the initial prototype and rapid development phases, the project has transitioned to a **Node.js (Fastify) + TypeScript** stack.
+
+### Why Node.js for the Prototype?
+
+1.  **Development Velocity:** Faster iteration on API contracts, authentication flows, and database schemas.
+2.  **Ecosystem Support:** Rich ecosystem of libraries for WebSockets (ws), database ORMs (Prisma), and security (JWT).
+3.  **Hiring/Onboarding:** Easier to find and onboard developers with Node.js/TypeScript expertise compared to low-level C++ systems programming.
+4.  **Sufficient Performance:** For the initial target of ~50 concurrent users, Node.js provides sub-millisecond JSON parsing and high-throughput I/O that meets all prototype requirements.
+
+### The Modular Future: "Hybrid Engine Architecture"
+
+To honor the original vision of ultra-high performance, the backend is designed to be **modular**. The architecture allows for the extraction of the core **Trading Engine** into a dedicated C++ microservice while keeping Node.js as the high-level API Orchestrator.
+
+**Evolution Path:**
+1.  **Phase 4 (Current Vision):** In-memory trade execution in Node.js.
+2.  **Phase 8:** Horizontal scaling of Node.js instances with Redis Pub/Sub.
+3.  **Phase 9 (Final Vision):** Extract the execution engine into a **C++ Microservice** using TCP/gRPC for communication. This allows for:
+    *   Deterministic latency (<100µs).
+    *   Shared-memory order books.
+    *   True parallelism for high-frequency simulated trading.
+
+This "Hybrid" approach provides the best of both worlds: the agility of Node.js for the "Frontend-of-the-Backend" (Auth, REST API, WebSockets) and the raw power of C++ for the core "Engine" logic.
+
 ---
 
 ## Real-Time Communication

@@ -1,5 +1,5 @@
 import { FastifyInstance } from "fastify";
-import { authenticate } from "../middleware/auth";
+// import { authenticate } from "../middleware/auth";
 import { UserController } from "../controllers/users.controllers";
 
 /**

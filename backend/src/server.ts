@@ -5,6 +5,7 @@ import fastifyJwt from "@fastify/jwt";
 import { initWebSocket } from "./websocket/server";
 import { prisma } from "./lib/prisma";
 import { userRoutes } from "./routes/users.route";
+import { assetRoutes } from "./routes/asset.route";
 
 const app = Fastify({ logger: false });
 
@@ -75,6 +76,9 @@ app.register(fastifyJwt, {
 
 // Register user routes with prefix
 app.register(userRoutes, { prefix: "/user" });
+
+//Register assets routes with prefix
+app.register(assetRoutes, {prefix: "/assets"});
 
 /**
  * Initializes and starts the Fastify server.

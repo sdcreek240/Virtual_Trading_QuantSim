@@ -1,0 +1,123 @@
+// DBML Definition for QuantSim (TiffEx)
+// Paste this into dbdiagram.io to visualize your schema logic.
+
+Project TiffEx {
+  database_type: 'PostgreSQL'
+  Note: 'High-performance virtual trading platform database.'
+}
+
+// ENUMS
+Enum AssetType {
+  STOCK
+  CRYPTO
+  ETF
+}
+
+Enum TradeSide {
+  BUY
+  SELL
+}
+
+Enum TradeStatus {
+  PENDING
+  EXECUTED
+  CANCELLED
+}
+
+Enum UserRole {
+  USER
+  ADMIN
+}
+
+// TABLES
+Table User {
+  id String [pk]
+  email String [unique]
+  username String [unique]
+  passwordHash String
+  balance Decimal [default: 100000.00, note: 'Decimal(20,2)']
+  role UserRole [default: 'USER']
+  lastLoginAt DateTime
+  createdAt DateTime [default: `now()`]
+  updatedAt DateTime
+}
+
+Table Asset {
+  id String [pk]
+  symbol String [unique]
+  name String
+  type AssetType
+  exchange String
+  sector String
+  industry String
+  description text
+  logoUrl String
+}
+
+Table Portfolio {
+  id String [pk]
+  userId String [ref: > User.id]
+  symbol String [ref: > Asset.symbol]
+  quantity Decimal [default: 0, note: 'Decimal(24,8)']
+  avgPrice Decimal [note: 'Decimal(20,4)']
+
+  Indexes {
+    (userId, symbol) [unique]
+  }
+}
+
+Table Trade {
+  id String [pk]
+  userId String [ref: > User.id]
+  symbol String [ref: > Asset.symbol]
+  side TradeSide
+  quantity Decimal [note: 'Decimal(24,8)']
+  price Decimal [note: 'Decimal(20,4)']
+  total Decimal [note: 'Decimal(20,2)']
+  status TradeStatus [default: 'EXECUTED']
+  createdAt DateTime [default: `now()`]
+
+  Indexes {
+    userId
+    symbol
+  }
+}
+
+Table MarketData {
+  id String [pk]
+  symbol String [unique, ref: - Asset.symbol]
+  price Decimal [note: 'Decimal(20,4)']
+  volume Decimal [note: 'Decimal(30,2)']
+  high24h Decimal [note: 'Decimal(20,4)']
+  low24h Decimal [note: 'Decimal(20,4)']
+  changePercent Decimal [note: 'Decimal(8,2)']
+  updatedAt DateTime
+}
+
+Table PriceHistory {
+  id String [pk]
+  symbol String [ref: > Asset.symbol]
+  open Decimal [note: 'Decimal(20,4)']
+  high Decimal [note: 'Decimal(20,4)']
+  low Decimal [note: 'Decimal(20,4)']
+  close Decimal [note: 'Decimal(20,4)']
+  volume Decimal [note: 'Decimal(30,2)']
+  timestamp DateTime
+  interval String [default: '1d']
+
+  Indexes {
+    (symbol, timestamp, interval) [unique]
+    (symbol, timestamp)
+  }
+}
+
+Table Watchlist {
+  id String [pk]
+  userId String [ref: > User.id]
+  symbol String [ref: > Asset.symbol]
+  createdAt DateTime [default: `now()`]
+
+  Indexes {
+    (userId, symbol) [unique]
+  }
+}
