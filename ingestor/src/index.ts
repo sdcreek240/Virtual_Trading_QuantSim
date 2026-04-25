@@ -12,24 +12,15 @@ const redis = new Redis({
 async function main() {
   console.log('🚀 TiffEx Market Data Ingestor Starting...');
   
-  // Initialize Yahoo Finance client in a version-compatible way (dynamic import)
-  let yf: any = null;
+  // Initialize Yahoo adapter (separate module)
+  let yahooAdapter: any = null;
   try {
-    const yahooMod = await import('yahoo-finance2');
-    if (yahooMod?.YahooFinance) {
-      yf = new yahooMod.YahooFinance();
-    } else if (yahooMod?.default?.YahooFinance) {
-      yf = new yahooMod.default.YahooFinance();
-    } else if (typeof yahooMod === 'function') {
-      yf = yahooMod;
-    } else if (yahooMod?.default && typeof yahooMod.default === 'function') {
-      yf = yahooMod.default;
-    } else {
-      yf = yahooMod?.default || yahooMod;
-    }
+    const YahooAdapter = (await import('./adapters/yahoo.adapter')).default;
+    yahooAdapter = new YahooAdapter();
+    await yahooAdapter.init();
   } catch (e) {
-    console.error('❌ Failed to dynamically import yahoo-finance2:', e instanceof Error ? e.message : e);
-    yf = null;
+    console.warn('⚠️ Could not initialize YahooAdapter:', e instanceof Error ? e.message : e);
+    yahooAdapter = null;
   }
 
   // Simple Redis heartbeat: verify connection and publish a lightweight status
@@ -38,6 +29,19 @@ async function main() {
       const pong = await redis.ping();
       await redis.publish('market_status', JSON.stringify({status: 'HEALTHY', source: 'ingestor', timestamp: Date.now(), pong}));
       console.log('📡 Ingestor heartbeat: Redis pong=', pong);
+
+      // If YahooAdapter is available, fetch a quick quote and publish it (non-blocking)
+      if (yahooAdapter && yahooAdapter.initialized) {
+        try {
+          const q = await yahooAdapter.quote('AAPL');
+          const update = { symbol: q.symbol || 'AAPL', price: q.regularMarketPrice || null, ts: Date.now() };
+          await redis.publish('price_updates', JSON.stringify(update));
+          console.log('📡 Yahoo quick quote published for', update.symbol);
+        } catch (e) {
+          console.warn('⚠️ YahooAdapter quote failed:', e instanceof Error ? e.message : e);
+        }
+      }
+
     } catch (err) {
       console.error('❌ Ingestor heartbeat failed:', err instanceof Error ? err.message : err);
       try {
