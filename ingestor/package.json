@@ -13,7 +13,7 @@
     "decimal.js": "^10.4.3",
     "dotenv": "^16.3.1",
     "ioredis": "^5.3.2",
-    "yahoo-finance2": "^3.14.0"
+    "yahoo-finance2": "^2.13.2"
   },
   "devDependencies": {
     "@types-node": "^20.8.0",
