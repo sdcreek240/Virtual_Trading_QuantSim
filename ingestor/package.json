@@ -1,0 +1,23 @@
+{
+  "name": "quantsim-ingestor",
+  "version": "1.0.0",
+  "description": "Market Data Ingestor for TiffEx",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "decimal.js": "^10.4.3",
+    "dotenv": "^16.3.1",
+    "ioredis": "^5.3.2",
+    "yahoo-finance2": "^3.14.0"
+  },
+  "devDependencies": {
+    "@types-node": "^20.8.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.2.0"
+  }
+}
