@@ -1,0 +1,18 @@
+FROM node:18-bullseye-slim
+
+# Create app directory
+WORKDIR /usr/src/ingestor
+
+# Copy package files to install production deps (if any)
+COPY package*.json ./
+
+# Install dependencies (no dev deps)
+RUN if [ -f package-lock.json ]; then npm ci --only=production; else npm install --only=production; fi
+
+# Copy ingestor service code
+COPY ingestor/ ./ingestor/
+
+ENV INGESTOR_PORT=4001
+EXPOSE 4001
+
+CMD ["node", "ingestor/server.js"]

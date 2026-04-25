@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+  ingestor:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.ingestor
+    image: virtualtrading/ingestor:local
+    container_name: vt_ingestor
+    environment:
+      - INGESTOR_PORT=4001
+    ports:
+      - "${INGESTOR_HOST_PORT:-4001}:4001"
+    restart: unless-stopped
