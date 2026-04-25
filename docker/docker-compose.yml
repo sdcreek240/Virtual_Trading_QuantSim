@@ -1,56 +1,97 @@
+version: '3.8'
+
 services:
-  backend:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.backend
-    ports:
-      - "3000:3000"
-    volumes:
-      - ../backend:/app 
-      - /app/node_modules
-    env_file:
-      - ../backend/.env
-    environment:
-      - NODE_ENV=development
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/quantsim?schema=public
-      - DB_HOST=db
-      - REDIS_HOST=redis
-    depends_on:
-      - db
-      - redis
-    command: sh -c "npm install && npm run dev"
-
-  ingestor:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.ingestor
-    working_dir: /usr/src/ingestor
-    volumes:
-      - ../ingestor:/usr/src/ingestor
-      - /usr/src/ingestor/node_modules
-    ports:
-      - "4001:4001"
-    env_file:
-      - ../ingestor/.env
-    environment:
-      - NODE_ENV=development
-      - REDIS_HOST=redis
-      - BACKEND_URL=http://backend:3000
-    depends_on:
-      - redis
-    command: sh -c "npm install && npm run dev"
-
   db:
-    image: postgres:14
-    restart: always
+    image: postgres:14-alpine  # Use alpine for smaller size
+    restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: quantsim
     ports:
       - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
-    image: redis:7
+    image: redis:7-alpine  # Use alpine for smaller size
+    restart: unless-stopped
     ports:
       - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+      # target: production  # Use production stage
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/quantsim?schema=public
+      - REDIS_HOST=redis
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  ingestor:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.ingestor
+      # target: production  # Use production stage
+    ports:
+      - "${INGESTOR_HOST_PORT:-4001}:4001"
+      - "${INGESTOR_WS_HOST_PORT:-4002}:4002"
+    environment:
+      - NODE_ENV=production
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - BACKEND_URL=http://backend:3000
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/quantsim?schema=public
+      - INGESTOR_PORT=4001
+      - INGESTOR_WS_PORT=4002
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    restart: unless-stopped
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+volumes:
+  postgres-data:
+  redis-data:
