@@ -6,11 +6,16 @@ export default class YahooAdapter {
     try {
       const mod = await import('yahoo-finance2');
       if (mod?.YahooFinance) {
+        // v3 export: class
         this.client = new mod.YahooFinance();
       } else if (mod?.default?.YahooFinance) {
         this.client = new mod.default.YahooFinance();
+      } else if (mod?.quote && typeof mod.quote === 'function') {
+        // v2 style export object with quote()
+        this.client = mod;
       } else if (typeof mod === 'function') {
-        this.client = mod; // v2 style
+        // default function export
+        this.client = { quote: mod };
       } else {
         this.client = mod?.default || mod;
       }
