@@ -20,6 +20,26 @@ services:
       - redis
     command: sh -c "npm install && npm run dev"
 
+  ingestor:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.ingestor
+    working_dir: /usr/src/ingestor
+    volumes:
+      - ../ingestor:/usr/src/ingestor
+      - /usr/src/ingestor/node_modules
+    ports:
+      - "4001:4001"
+    env_file:
+      - ../ingestor/.env
+    environment:
+      - NODE_ENV=development
+      - REDIS_HOST=redis
+      - BACKEND_URL=http://backend:3000
+    depends_on:
+      - redis
+    command: sh -c "npm install && npm run dev"
+
   db:
     image: postgres:14
     restart: always
