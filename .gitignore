@@ -214,4 +214,5 @@ scripts/output/
 # Keep example files
 # ----------------------------
 !.env.example
-!.gitkeep
+!.gitkeepagents_collaboration/sync/*
+agents_collaboration/*.tmp
